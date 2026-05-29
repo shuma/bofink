@@ -16,6 +16,7 @@ interface MortgageState {
   adress: string;
   boVarde: number; // Property value
   inkomst: number; // Monthly income
+  fodelsear: number; // Birth year (0 = unknown), used for pension-age markers
   applyRanteavdrag: boolean; // Count interest deduction in monthly cost (vs. received via tax return)
 
   // UI state
@@ -33,6 +34,7 @@ interface MortgageState {
   setAdress: (adress: string) => void;
   setBoVarde: (value: number) => void;
   setInkomst: (value: number) => void;
+  setFodelsear: (value: number) => void;
   setApplyRanteavdrag: (value: boolean) => void;
 
   // Actions - UI
@@ -50,6 +52,7 @@ const initialState = {
   adress: "",
   boVarde: 0,
   inkomst: 0,
+  fodelsear: 0,
   applyRanteavdrag: false,
   activeNav: "dashboard" as NavItem,
   viewMode: "preview" as ViewMode,
@@ -84,6 +87,7 @@ export const useMortgageStore = create<MortgageState>()(
       setAdress: (adress) => set({ adress }),
       setBoVarde: (boVarde) => set({ boVarde }),
       setInkomst: (inkomst) => set({ inkomst }),
+      setFodelsear: (fodelsear) => set({ fodelsear }),
       setApplyRanteavdrag: (applyRanteavdrag) => set({ applyRanteavdrag }),
 
       // UI actions
@@ -103,6 +107,7 @@ export const useMortgageStore = create<MortgageState>()(
         adress: state.adress,
         boVarde: state.boVarde,
         inkomst: state.inkomst,
+        fodelsear: state.fodelsear,
         applyRanteavdrag: state.applyRanteavdrag,
       }),
     }

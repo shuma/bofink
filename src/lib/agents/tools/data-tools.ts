@@ -9,6 +9,7 @@ export type ToolAction =
   | { action: "removeLoan"; data: { loanId: string } }
   | { action: "setPropertyValue"; data: { value: number } }
   | { action: "setIncome"; data: { monthlyIncome: number } }
+  | { action: "setBirthYear"; data: { birthYear: number } }
   | { action: "setAddress"; data: { address: string } }
   | { action: "setYears"; data: { years: 10 | 20 | 30 } }
   | { action: "getLoanSummary"; data: LoanSummary }
@@ -145,6 +146,27 @@ export const setIncome = tool({
   },
 });
 
+// Set birth year (used for pension-age markers)
+export const setBirthYear = tool({
+  description:
+    "Sätt användarens födelseår. Används för att visa pensionsålder i skuldutvecklingen.",
+  inputSchema: z.object({
+    birthYear: z
+      .number()
+      .int()
+      .min(1920)
+      .max(new Date().getFullYear())
+      .describe("Födelseår, t.ex. 1985"),
+  }),
+  execute: async (input) => {
+    return {
+      action: "setBirthYear" as const,
+      data: { birthYear: input.birthYear },
+      message: `Satte födelseår till ${input.birthYear}`,
+    };
+  },
+});
+
 // Set address
 export const setAddress = tool({
   description: "Sätt bostadens adress",
@@ -266,6 +288,7 @@ export const dataTools = {
   removeLoan,
   setPropertyValue,
   setIncome,
+  setBirthYear,
   setAddress,
   setYears,
   getLoanSummary,

@@ -44,11 +44,13 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
     inkomst,
     adress,
     years,
+    fodelsear,
     addLoan,
     updateLoan,
     removeLoan,
     setBoVarde,
     setInkomst,
+    setFodelsear,
     setAdress,
     setYears,
   } = useMortgageStore();
@@ -63,6 +65,7 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
       boVarde,
       inkomst,
       years,
+      fodelsear,
       totalLoan,
       ltv,
       debtRatio,
@@ -82,6 +85,7 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
       boVarde,
       inkomst,
       years,
+      fodelsear,
       totalLoan,
       ltv,
       debtRatio,
@@ -196,6 +200,11 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
                 setInkomst(data.monthlyIncome);
                 break;
               }
+              case "setBirthYear": {
+                const data = result.data as { birthYear: number };
+                setFodelsear(data.birthYear);
+                break;
+              }
               case "setAddress": {
                 const data = result.data as { address: string };
                 setAdress(data.address);
@@ -219,6 +228,7 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
     removeLoan,
     setBoVarde,
     setInkomst,
+    setFodelsear,
     setAdress,
     setYears,
   ]);

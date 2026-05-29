@@ -6,12 +6,11 @@ import { useMortgageStore } from "@/hooks/use-mortgage-store";
 import { useCalculations } from "@/hooks/use-calculations";
 import { formatSEK } from "@/lib/formatters";
 
-// OKLCH colors from DESIGN.md tokens
+// Restrained, monochrome-blue palette from DESIGN.md
 const COLORS = {
-  blue: "oklch(0.6 0.18 250)",      // Calm Blue (primary)
-  red: "oklch(0.62 0.2 25)",        // Soft Red (destructive)
-  amber: "oklch(0.7 0.15 85)",      // Warm amber
-  green: "oklch(0.6 0.15 145)",     // Soft green
+  primary: "oklch(0.6 0.18 250)",   // Calm Blue (primary)
+  light: "oklch(0.78 0.11 250)",    // Light blue
+  quiet: "oklch(0.62 0.04 255)",    // Quiet slate-blue
 } as const;
 
 export function PropertyOverviewCard() {
@@ -23,20 +22,19 @@ export function PropertyOverviewCard() {
       icon: Home,
       label: "Bostadens värde",
       value: formatSEK(boVarde),
-      color: COLORS.blue,
+      color: COLORS.primary,
     },
     {
       icon: TrendingDown,
       label: "Total skuld",
       value: formatSEK(totalDebt),
-      color: COLORS.red,
+      color: COLORS.light,
     },
     {
       icon: Percent,
       label: "Belåningsgrad",
       value: `${ltv.toFixed(1)}%`,
-      subtitle: ltv > 70 ? "Över 70%" : ltv > 50 ? "50-70%" : "Under 50%",
-      color: ltv > 70 ? COLORS.red : ltv > 50 ? COLORS.amber : COLORS.green,
+      color: COLORS.quiet,
     },
   ];
 
@@ -73,9 +71,6 @@ export function PropertyOverviewCard() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground">{item.label}</div>
-              {item.subtitle && (
-                <div className="text-xs text-muted-foreground/80">{item.subtitle}</div>
-              )}
             </div>
             <div className="text-sm font-medium tabular-nums">{item.value}</div>
           </div>

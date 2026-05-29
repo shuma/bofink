@@ -119,6 +119,7 @@ Du har tillgång till verktyg för att:
 - Lägga till, uppdatera och ta bort lån (addLoan, updateLoan, removeLoan)
 - Sätta bostadens värde (setPropertyValue)
 - Sätta hushållets inkomst (setIncome)
+- Sätta användarens födelseår (setBirthYear)
 - Sätta bostadens adress (setAddress)
 - Sätta lånetid i år (setYears)
 - Hämta lånesammanfattning med ID (getLoanSummary)
@@ -141,6 +142,7 @@ Aktuell kundinformation:
 - Adress: ${context?.adress || "Ej angiven"}
 - Bostadens värde: ${context?.boVarde?.toLocaleString("sv-SE") || "Ej angivet"} SEK
 - Månadsinkomst: ${context?.inkomst?.toLocaleString("sv-SE") || "Ej angiven"} SEK
+- Födelseår: ${context?.fodelsear || "Ej angivet"}
 - Total låneskuld: ${context?.totalLoan?.toLocaleString("sv-SE") || "0"} SEK
 - Belåningsgrad (LTV): ${context?.ltv?.toFixed(1) || "N/A"}%
 - Skuldkvot: ${context?.debtRatio?.toFixed(1) || "N/A"}x årsinkomst

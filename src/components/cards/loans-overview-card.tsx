@@ -77,26 +77,20 @@ export function LoansOverviewCard() {
                 key={loan.id}
                 className="group flex items-center gap-3 rounded-xl px-2 py-2.5 -mx-2 transition-colors hover:bg-muted/40"
               >
-                {/* Color bar + Bank badge */}
-                <div className="flex items-center gap-2.5 flex-shrink-0">
-                  <div
-                    className="w-1 h-8 rounded-full"
-                    style={{ backgroundColor: loan.color }}
-                  />
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-semibold tracking-tight"
-                    style={{
-                      backgroundColor: bankInfo?.color || "oklch(0.5 0.02 260)",
-                      color: "oklch(0.99 0 0)",
-                    }}
-                  >
-                    {bankInfo?.abbr || loan.bank.slice(0, 2).toUpperCase()}
-                  </div>
+                {/* Bank badge */}
+                <div
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold tracking-tight"
+                  style={{
+                    backgroundColor: bankInfo?.color || "oklch(0.5 0.02 260)",
+                    color: "oklch(0.99 0 0)",
+                  }}
+                >
+                  {bankInfo?.abbr || loan.bank.slice(0, 2).toUpperCase()}
                 </div>
 
                 {/* Loan info */}
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium leading-tight">
+                <div className="w-40 flex-shrink-0">
+                  <div className="truncate text-sm font-medium leading-tight">
                     {loan.namn || loan.bank}
                   </div>
                   <div className="mt-0.5 text-xs text-muted-foreground">
@@ -104,14 +98,25 @@ export function LoansOverviewCard() {
                   </div>
                 </div>
 
-                {/* Amount + share */}
-                <div className="text-right">
-                  <div className="text-sm font-medium tabular-nums">
-                    {formatSEK(loan.belopp)}
+                {/* Share bar fills the middle space */}
+                <div className="flex flex-1 items-center gap-3">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.max(loan.share, 2)}%`,
+                        backgroundColor: loan.color,
+                      }}
+                    />
                   </div>
-                  <div className="text-xs tabular-nums text-muted-foreground">
+                  <span className="w-9 flex-shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                     {loan.share.toFixed(0)}%
-                  </div>
+                  </span>
+                </div>
+
+                {/* Amount */}
+                <div className="w-28 flex-shrink-0 text-right text-sm font-medium tabular-nums">
+                  {formatSEK(loan.belopp)}
                 </div>
               </div>
             );

@@ -1,12 +1,11 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -20,6 +19,7 @@ import { formatSEK } from "@/lib/formatters";
 const STROKE = "oklch(0.6 0.18 250)";
 
 const currentYear = new Date().getFullYear();
+const CHART_HEIGHT = 168;
 
 /** Compact SEK for axis ticks: 2,4 mkr / 850 tkr */
 function formatCompactSEK(value: number): string {
@@ -61,8 +61,10 @@ function crossingYear(
   return null;
 }
 
+const PENSION_AGE = 65;
+
 export function DebtOverTimeCard() {
-  const { loans, years, boVarde } = useMortgageStore();
+  const { loans, years, boVarde, fodelsear } = useMortgageStore();
   const { projections } = useCalculations();
 
   const data = useMemo(
@@ -106,7 +108,27 @@ export function DebtOverTimeCard() {
       );
   }, [data, boVarde, years]);
 
+  // Pension age: the projection year the user turns 65, if within the horizon.
+  const pensionYear = useMemo(() => {
+    if (fodelsear <= 0) return null;
+    const offset = fodelsear + PENSION_AGE - currentYear;
+    return offset >= 0 && offset <= years ? offset : null;
+  }, [fodelsear, years]);
+
   const gradientId = useId();
+
+  // Measure container width so the chart never renders with invalid dimensions.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) setChartWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (loans.length === 0) return null;
 
@@ -128,9 +150,11 @@ export function DebtOverTimeCard() {
       </CardHeader>
 
       <CardContent>
-        <div className="h-[168px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div ref={wrapRef} className="w-full" style={{ height: CHART_HEIGHT }}>
+          {chartWidth > 0 && (
             <AreaChart
+              width={chartWidth}
+              height={CHART_HEIGHT}
               data={data}
               margin={{ top: 18, right: 8, bottom: 0, left: 0 }}
             >
@@ -187,6 +211,21 @@ export function DebtOverTimeCard() {
                 />
               ))}
 
+              {pensionYear !== null && (
+                <ReferenceLine
+                  x={pensionYear}
+                  stroke={STROKE}
+                  strokeOpacity={0.7}
+                  strokeDasharray="5 4"
+                  label={{
+                    value: `Pension ${PENSION_AGE} år`,
+                    position: "top",
+                    fill: STROKE,
+                    fontSize: 10,
+                  }}
+                />
+              )}
+
               <Tooltip
                 cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
                 content={({ active, payload }) => {
@@ -227,7 +266,7 @@ export function DebtOverTimeCard() {
                 animationDuration={600}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          )}
         </div>
 
         {/* Quiet footer: start to end, reads without hovering */}

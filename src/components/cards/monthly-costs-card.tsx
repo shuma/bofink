@@ -101,7 +101,7 @@ export function MonthlyCostsCard() {
             <p className="mt-0.5 text-xs text-muted-foreground">
               {applyRanteavdrag
                 ? `Avdraget är inräknat, ${formatSEK(taxSavingsMonthly)} per månad.`
-                : `≈ ${formatSEK(taxSavingsYearly)} per år får du tillbaka via deklarationen.`}
+                : `Du får tillbaka ca ${formatSEK(taxSavingsYearly)} per år via deklarationen.`}
             </p>
           </div>
           <button
