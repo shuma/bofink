@@ -6,16 +6,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { useMortgageStore } from "@/hooks/use-mortgage-store";
 import { formatSEK } from "@/lib/formatters";
 
-// OKLCH chart colors from DESIGN.md (blue gradient + complementary)
+// OKLCH chart colors from DESIGN.md (blue gradient)
 const COLORS = [
+  "oklch(0.72 0.14 250)", // chart-2 (lighter, for visual balance)
   "oklch(0.62 0.17 250)", // chart-3 (primary blue)
-  "oklch(0.72 0.14 250)", // chart-2
   "oklch(0.52 0.18 250)", // chart-4
   "oklch(0.82 0.1 250)",  // chart-1
   "oklch(0.45 0.18 250)", // chart-5
-  "oklch(0.6 0.15 145)",  // green accent
-  "oklch(0.7 0.15 85)",   // amber accent
-  "oklch(0.55 0.12 300)", // purple accent
 ];
 
 export function LoanDistributionCard() {
@@ -41,15 +38,15 @@ export function LoanDistributionCard() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <CardTitle>Lånefördelning</CardTitle>
             <CardDescription>
-              {loans.length} {loans.length === 1 ? "lån" : "lån"} totalt
+              {loans.length} lån totalt
             </CardDescription>
           </div>
           <div className="text-right">
-            <div className="font-heading text-xl font-semibold tabular-nums">
+            <div className="font-heading text-lg font-semibold tabular-nums tracking-tight">
               {formatSEK(totalLoan)}
             </div>
           </div>
@@ -57,16 +54,16 @@ export function LoanDistributionCard() {
       </CardHeader>
 
       <CardContent>
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           {/* Pie chart */}
-          <div className="relative h-[160px] w-[160px] flex-shrink-0">
-            <PieChart width={160} height={160}>
+          <div className="relative h-[120px] w-[120px] flex-shrink-0">
+            <PieChart width={120} height={120}>
               <Pie
                 data={chartData}
-                cx={80}
-                cy={80}
-                innerRadius={45}
-                outerRadius={70}
+                cx={60}
+                cy={60}
+                innerRadius={36}
+                outerRadius={54}
                 dataKey="value"
                 nameKey="name"
                 strokeWidth={2}
@@ -88,8 +85,8 @@ export function LoanDistributionCard() {
                         >
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy || 0) - 6}
-                            className="fill-foreground text-sm font-semibold"
+                            y={(viewBox.cy || 0) - 4}
+                            className="fill-foreground text-base font-semibold"
                           >
                             {loans.length}
                           </tspan>
@@ -111,9 +108,9 @@ export function LoanDistributionCard() {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-xl border border-border/50 bg-card px-3 py-2 shadow-lg">
-                        <p className="text-sm font-medium">{data.name}</p>
-                        <p className="text-sm tabular-nums text-muted-foreground">
+                      <div className="rounded-lg border border-border/50 bg-card px-2.5 py-1.5 shadow-md">
+                        <p className="text-xs font-medium">{data.name}</p>
+                        <p className="text-xs tabular-nums text-muted-foreground">
                           {formatSEK(data.value)} ({data.percentage.toFixed(0)}%)
                         </p>
                       </div>
@@ -126,21 +123,17 @@ export function LoanDistributionCard() {
           </div>
 
           {/* Legend */}
-          <div className="flex-1 space-y-2.5">
+          <div className="flex-1 space-y-2">
             {chartData.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
+              <div key={item.id} className="flex items-center gap-2.5">
                 <div
-                  className="h-3 w-3 flex-shrink-0 rounded-sm"
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                   style={{ backgroundColor: item.fill }}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm">{item.name}</span>
-                    <span className="flex-shrink-0 text-sm tabular-nums text-muted-foreground">
-                      {item.percentage.toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
+                <span className="min-w-0 flex-1 truncate text-sm">{item.name}</span>
+                <span className="flex-shrink-0 text-sm tabular-nums text-muted-foreground">
+                  {item.percentage.toFixed(0)}%
+                </span>
               </div>
             ))}
           </div>

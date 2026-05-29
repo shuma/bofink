@@ -3,8 +3,8 @@
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ViewToggle } from "@/components/toolbar/view-toggle";
-import { LoansListCard } from "@/components/cards/loans-list-card";
-import { LoanDistributionCard } from "@/components/cards/loan-distribution-card";
+import { LoansOverviewCard } from "@/components/cards/loans-overview-card";
+import { DebtOverTimeCard } from "@/components/cards/debt-over-time-card";
 import { MonthlyCostsCard } from "@/components/cards/monthly-costs-card";
 import { PropertyOverviewCard } from "@/components/cards/property-overview-card";
 import { useMortgageStore } from "@/hooks/use-mortgage-store";
@@ -54,11 +54,11 @@ export function MainContent() {
             <MonthlyCostsCard />
           </div>
 
-          {/* Loans list */}
-          <LoansListCard />
+          {/* Loans overview */}
+          <LoansOverviewCard />
 
-          {/* Loan distribution */}
-          {loans.length > 0 && <LoanDistributionCard />}
+          {/* Debt trajectory over time */}
+          <DebtOverTimeCard />
         </main>
       ) : (
         <EmptyState />

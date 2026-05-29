@@ -29,11 +29,11 @@ export function LoansListCard() {
       <CardHeader>
         <CardTitle>Lån</CardTitle>
         <CardDescription>
-          {loans.length} {loans.length === 1 ? "lån" : "lån"} registrerade
+          {loans.length} lån registrerade
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-1">
         {loans.map((loan) => {
           const bankInfo = banks.find(
             (b) => b.bank.toLowerCase() === loan.bank.toLowerCase()
@@ -42,11 +42,11 @@ export function LoansListCard() {
           return (
             <div
               key={loan.id}
-              className="group flex items-center gap-3 rounded-xl p-2 -mx-2 transition-colors hover:bg-muted/50"
+              className="group flex items-center gap-3 rounded-xl px-2 py-2.5 -mx-2 transition-colors hover:bg-muted/40"
             >
-              {/* Bank icon */}
+              {/* Bank badge */}
               <div
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold shadow-sm transition-transform group-hover:scale-105"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold tracking-tight"
                 style={{
                   backgroundColor: bankInfo?.color || "oklch(0.5 0.02 260)",
                   color: "oklch(0.99 0 0)",
@@ -57,15 +57,15 @@ export function LoansListCard() {
 
               {/* Loan info */}
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{loan.namn || loan.bank}</div>
-                <div className="text-xs text-muted-foreground">
-                  {loan.typ} · {formatPercent(loan.ranta)}
+                <div className="text-sm font-medium leading-tight">{loan.namn || loan.bank}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {loan.typ}, {formatPercent(loan.ranta)}
                 </div>
               </div>
 
               {/* Amount */}
-              <div className="text-right">
-                <div className="text-sm font-medium tabular-nums">{formatSEK(loan.belopp)}</div>
+              <div className="text-sm font-medium tabular-nums text-right">
+                {formatSEK(loan.belopp)}
               </div>
             </div>
           );

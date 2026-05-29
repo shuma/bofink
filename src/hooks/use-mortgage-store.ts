@@ -16,6 +16,7 @@ interface MortgageState {
   adress: string;
   boVarde: number; // Property value
   inkomst: number; // Monthly income
+  applyRanteavdrag: boolean; // Count interest deduction in monthly cost (vs. received via tax return)
 
   // UI state
   activeNav: NavItem;
@@ -32,6 +33,7 @@ interface MortgageState {
   setAdress: (adress: string) => void;
   setBoVarde: (value: number) => void;
   setInkomst: (value: number) => void;
+  setApplyRanteavdrag: (value: boolean) => void;
 
   // Actions - UI
   setActiveNav: (nav: NavItem) => void;
@@ -48,6 +50,7 @@ const initialState = {
   adress: "",
   boVarde: 0,
   inkomst: 0,
+  applyRanteavdrag: false,
   activeNav: "dashboard" as NavItem,
   viewMode: "preview" as ViewMode,
   chatOpen: true,
@@ -81,6 +84,7 @@ export const useMortgageStore = create<MortgageState>()(
       setAdress: (adress) => set({ adress }),
       setBoVarde: (boVarde) => set({ boVarde }),
       setInkomst: (inkomst) => set({ inkomst }),
+      setApplyRanteavdrag: (applyRanteavdrag) => set({ applyRanteavdrag }),
 
       // UI actions
       setActiveNav: (activeNav) => set({ activeNav }),
@@ -99,6 +103,7 @@ export const useMortgageStore = create<MortgageState>()(
         adress: state.adress,
         boVarde: state.boVarde,
         inkomst: state.inkomst,
+        applyRanteavdrag: state.applyRanteavdrag,
       }),
     }
   )
