@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <>
       <AppSidebar />
-      <SidebarInset className="flex-1 h-svh overflow-y-auto">
+      <SidebarInset className="flex h-svh flex-col overflow-hidden">
         <MainContent />
       </SidebarInset>
     </>

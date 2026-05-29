@@ -61,16 +61,17 @@ export function PropertyOverviewCard() {
         {items.map((item) => (
           <div key={item.label} className="flex items-center gap-3">
             <div
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl transition-colors"
-              style={{ backgroundColor: `color-mix(in oklch, ${item.color} 12%, transparent)` }}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              style={{ backgroundColor: `color-mix(in oklch, ${item.color} 10%, transparent)` }}
             >
               <item.icon
-                className="h-5 w-5"
+                className="h-[18px] w-[18px]"
                 style={{ color: item.color }}
+                strokeWidth={2}
               />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm text-muted-foreground">{item.label}</div>
+              <div className="text-sm text-muted-foreground/90">{item.label}</div>
             </div>
             <div className="text-sm font-medium tabular-nums">{item.value}</div>
           </div>

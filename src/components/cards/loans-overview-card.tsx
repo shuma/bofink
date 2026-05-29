@@ -75,11 +75,11 @@ export function LoansOverviewCard() {
             return (
               <div
                 key={loan.id}
-                className="group flex items-center gap-3 rounded-xl px-2 py-2.5 -mx-2 transition-colors hover:bg-muted/40"
+                className="group flex items-center gap-3 rounded-xl px-2 py-2 -mx-2 transition-colors hover:bg-muted/30"
               >
                 {/* Bank badge */}
                 <div
-                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold tracking-tight"
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[10px] font-bold tracking-tight shadow-sm"
                   style={{
                     backgroundColor: bankInfo?.color || "oklch(0.5 0.02 260)",
                     color: "oklch(0.99 0 0)",
@@ -89,20 +89,20 @@ export function LoansOverviewCard() {
                 </div>
 
                 {/* Loan info */}
-                <div className="w-40 flex-shrink-0">
+                <div className="w-36 flex-shrink-0">
                   <div className="truncate text-sm font-medium leading-tight">
                     {loan.namn || loan.bank}
                   </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
+                  <div className="mt-0.5 text-xs text-muted-foreground/80">
                     {loan.typ}, {formatPercent(loan.ranta)}
                   </div>
                 </div>
 
                 {/* Share bar fills the middle space */}
                 <div className="flex flex-1 items-center gap-3">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${Math.max(loan.share, 2)}%`,
                         backgroundColor: loan.color,

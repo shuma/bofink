@@ -82,9 +82,9 @@ export function MonthlyCostsCard() {
                 {formatSEK(Math.abs(item.value))}
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full"
+                className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${Math.min(item.percentage, 100)}%`,
                   backgroundColor: item.color,

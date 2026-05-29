@@ -318,9 +318,6 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
             />
           </PromptInputFooter>
         </PromptInput>
-        <p className="mt-3 text-center text-[10px] text-muted-foreground/50">
-          AI-råd ersätter inte professionell finansiell rådgivning.
-        </p>
       </div>
     </div>
   );
