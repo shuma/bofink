@@ -2,6 +2,7 @@ import { streamText, tool, convertToModelMessages, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod/v4";
 import { dataTools } from "@/lib/agents/tools/data-tools";
+import { askUser } from "@/lib/agents/tools/agent-tools";
 
 export const maxDuration = 30;
 
@@ -101,6 +102,7 @@ const allTools = {
   calculateMonthlyPayment,
   compareRates,
   suggestAmortization,
+  askUser,
   ...dataTools,
 };
 
@@ -116,6 +118,7 @@ export async function POST(req: Request) {
   const systemPrompt = `Du är en svensk bolånerådgivare som hjälper användare att fylla i och hantera sina bolåneuppgifter.
 
 Du har tillgång till verktyg för att:
+- Ställa frågor till användaren (askUser) - VIKTIGT: Använd detta verktyg för att samla in information som saknas!
 - Lägga till, uppdatera och ta bort lån (addLoan, updateLoan, removeLoan)
 - Sätta bostadens värde (setPropertyValue)
 - Sätta hushållets inkomst (setIncome)
@@ -129,10 +132,19 @@ Du har tillgång till verktyg för att:
 - Generera kontextbaserade förslag på frågor (generateSuggestions)
 
 Instruktioner:
-1. Fråga användaren om nödvändig information om de inte angett den
-2. Använd verktygen för att uppdatera data baserat på användarens svar
-3. Bekräfta alltid ändringar du gör
-4. Ge råd baserat på svenska bolåneregler
+1. När användaren ger partiell information (t.ex. "Jag har ett bolån på 2,5 miljoner"), använd askUser-verktyget för att ställa EN fråga i taget för att samla in saknad information
+2. Ställ frågor i denna ordning av prioritet:
+   - Bank (om lån nämns men bank saknas)
+   - Ränta (om lån nämns men ränta saknas)
+   - Räntebindningstyp (rörlig, 1 år, 3 år eller 5 år)
+   - Amortering (valfritt)
+   - Bostadens värde (om inte angivet)
+   - Månadsinkomst (om inte angivet)
+3. Använd data-verktygen för att uppdatera data baserat på användarens svar
+4. Bekräfta alltid ändringar du gör
+5. Ge råd baserat på svenska bolåneregler
+
+VIKTIGT: Använd askUser-verktyget istället för att skriva ut frågor som vanlig text. Detta ger användaren ett snyggt formulär att fylla i!
 
 Svenska regler du ska känna till:
 - Amorteringskrav: >70% LTV = 2%/år, 50-70% LTV = 1%/år, >4.5x skuldkvot = +1%/år

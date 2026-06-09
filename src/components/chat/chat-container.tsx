@@ -8,6 +8,8 @@ import { useChatStore } from "@/hooks/use-chat-store";
 import { useCalculations } from "@/hooks/use-calculations";
 import { useSuggestions } from "@/hooks/use-suggestions";
 import { ChatMessages, ChatMessage } from "./chat-messages";
+import { QuestionCard } from "@/components/agent/question-card";
+import type { AskUserArgs } from "@/lib/agents/tools/agent-tools";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -105,7 +107,7 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
     [loanContext]
   );
 
-  const { messages, sendMessage, status, setMessages, stop } = useChat({
+  const { messages, sendMessage, status, setMessages, stop, addToolResult } = useChat({
     id: chatId,
     transport,
     messages: storedMessages,
@@ -233,6 +235,66 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
     setYears,
   ]);
 
+  // Find pending askUser tool call (human-in-the-loop)
+  // For tools without an execute function, the state will be "input-available" when waiting for user input
+  const pendingQuestion = useMemo(() => {
+    for (const message of messages) {
+      if (message.parts) {
+        for (const part of message.parts) {
+          // Check for askUser tool call that's waiting for input
+          // Tool parts have type like "tool-askUser" and state "input-available" when waiting for result
+          if (
+            part.type === "tool-askUser" &&
+            "state" in part &&
+            part.state === "input-available" &&
+            "input" in part
+          ) {
+            return {
+              toolCallId: (part as { toolCallId: string }).toolCallId,
+              args: (part as { input: unknown }).input as AskUserArgs,
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }, [messages]);
+
+  // Handle answering the question
+  const handleQuestionAnswer = useCallback(
+    (value: string | number | string[]) => {
+      if (!pendingQuestion) return;
+
+      // Submit the tool result
+      addToolResult({
+        toolCallId: pendingQuestion.toolCallId,
+        tool: "askUser",
+        output: {
+          field: pendingQuestion.args.field,
+          value,
+          success: true,
+        },
+      });
+    },
+    [pendingQuestion, addToolResult]
+  );
+
+  // Handle skipping the question
+  const handleQuestionSkip = useCallback(() => {
+    if (!pendingQuestion) return;
+
+    // Submit empty result to skip
+    addToolResult({
+      toolCallId: pendingQuestion.toolCallId,
+      tool: "askUser",
+      output: {
+        field: pendingQuestion.args.field,
+        value: "",
+        success: false,
+      },
+    });
+  }, [pendingQuestion, addToolResult]);
+
   // Convert AI SDK messages to our format
   const formattedMessages: ChatMessage[] = messages.map((m) => ({
     id: m.id,
@@ -256,18 +318,28 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
 
   const { suggestions, isLoading: suggestionsLoading } = useSuggestions();
 
-  // Only show suggestions when user has entered some mortgage data and suggestions are loaded
+  // Only show suggestions when user has entered some mortgage data, suggestions are loaded, and no pending question
   const hasData = loans.length > 0 || boVarde > 0 || inkomst > 0 || adress !== "";
-  const showSuggestions = hasData && suggestions.length > 0 && !suggestionsLoading;
+  const showSuggestions = hasData && suggestions.length > 0 && !suggestionsLoading && !pendingQuestion;
 
   return (
     <div className="flex h-full flex-col">
       <ChatMessages
         messages={formattedMessages}
-        isLoading={isLoading}
+        isLoading={isLoading && !pendingQuestion}
         onStarterClick={handleSuggestionClick}
       />
       <div className="relative flex-shrink-0 px-5 pb-5 pt-4">
+        {/* Question Card for pending askUser tool call */}
+        {pendingQuestion && (
+          <div className="mb-4">
+            <QuestionCard
+              question={pendingQuestion.args}
+              onAnswer={handleQuestionAnswer}
+              onSkip={handleQuestionSkip}
+            />
+          </div>
+        )}
         {/* Fade gradient overlay */}
         <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-sidebar to-transparent" />
         {showSuggestions && (

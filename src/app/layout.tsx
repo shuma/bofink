@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Inter, Figtree } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -38,16 +37,7 @@ export default function RootLayout({
     >
       <body className="h-full">
         <TooltipProvider delay={0}>
-          <SidebarProvider
-            defaultOpen={true}
-            className="h-svh"
-            style={{
-              "--sidebar-width": "400px",
-              "--sidebar-width-mobile": "320px",
-            } as React.CSSProperties}
-          >
-            {children}
-          </SidebarProvider>
+          {children}
         </TooltipProvider>
       </body>
     </html>
