@@ -117,6 +117,7 @@ export function InsurelyEmbed({
         customerId,
         configName,
         language,
+        themeMode: "light",
       },
     };
 
@@ -175,8 +176,8 @@ export function InsurelyEmbed({
         </h3>
       </div>
 
-      {/* Content */}
-      <div className="px-5 pb-3">
+      {/* Content - scrollable */}
+      <div className="px-4 pb-4 max-h-[500px] overflow-y-auto">
         {isLoading && !isPlaceholder && (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
@@ -268,8 +269,8 @@ export function InsurelyEmbed({
             referrerPolicy="origin"
             allow="clipboard-write"
             className={cn(
-              "w-full border-0 rounded-lg transition-opacity",
-              isLoading ? "h-0 opacity-0" : "h-[400px] opacity-100"
+              "w-full border-0 rounded-xl transition-opacity bg-white",
+              isLoading ? "h-0 opacity-0" : "h-[700px] opacity-100"
             )}
             onLoad={() => setIsLoading(false)}
           />
