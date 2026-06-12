@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MainContent } from "@/components/layout/main-content";
 import { SidebarInset } from "@/components/ui/sidebar";
 
-export default function DashboardPage() {
+function DashboardContent() {
   return (
     <>
       <AppSidebar />
@@ -12,5 +13,19 @@ export default function DashboardPage() {
         <MainContent />
       </SidebarInset>
     </>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-svh w-full items-center justify-center bg-background">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

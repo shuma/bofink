@@ -2,8 +2,9 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { InsurelyEmbed } from "@/components/agent/insurely-embed";
+import { InsurelyConnect } from "@/components/agent/insurely";
+import type { InsurelyLoanRaw } from "@/types/insurely";
+import { transformInsurelyLoan, formatBindingPeriod } from "@/lib/insurely/transform";
 import { QuestionCard } from "@/components/agent/question-card";
 import { ChatInput } from "@/components/chat-input";
 import {
@@ -12,6 +13,7 @@ import {
   type Category,
 } from "@/hooks/use-agent-store";
 import { useMortgageStore } from "@/hooks/use-mortgage-store";
+import { useChatStore } from "@/hooks/use-chat-store";
 import type { Loan } from "@/types/loan";
 
 // Demo data for testing when Insurely is not configured
@@ -108,17 +110,6 @@ const DEMO_LOANS_RAW = [
   },
 ];
 
-// Convert binding period to Swedish format
-function formatBindingPeriod(period: string): string {
-  const map: Record<string, string> = {
-    ONE_YEAR: "1 år",
-    TWO_YEARS: "2 år",
-    THREE_YEARS: "3 år",
-    FIVE_YEARS: "5 år",
-    VARIABLE: "rörlig",
-  };
-  return map[period] || "rörlig";
-}
 
 // Status card with text shimmer effect
 function StatusCard({
@@ -158,6 +149,7 @@ function OnboardingContent() {
   } = useAgentStore();
 
   const { setFromAgentAnswers, addLoan, setAdress, setBoVarde, resetAll } = useMortgageStore();
+  const { clearMessages } = useChatStore();
 
   // Reset and set category from URL params on mount
   useEffect(() => {
@@ -182,14 +174,30 @@ function OnboardingContent() {
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const canGoBack = currentQuestionIndex > 0;
 
-  const handleInsurelyComplete = (data: unknown) => {
-    console.log("Insurely data:", data);
-    router.push("/dashboard");
+  const handleInsurelyComplete = (loans: InsurelyLoanRaw[]) => {
+    // Reset existing data and chat history
+    resetAll();
+    clearMessages();
+
+    // Transform and add loans
+    loans.forEach((rawLoan) => {
+      const loan = transformInsurelyLoan(rawLoan);
+      addLoan(loan);
+    });
+
+    // Try to extract property address from the first loan
+    const mortgageLoan = loans.find((loan) => loan.type === "MORTGAGE_LOAN");
+    if (mortgageLoan?.financedObject) {
+      setAdress(mortgageLoan.financedObject);
+    }
+
+    router.push("/dashboard?source=insurely");
   };
 
   const handleDemoData = () => {
-    // Reset existing data
+    // Reset existing data and chat history
     resetAll();
+    clearMessages();
 
     // Convert demo loans to our Loan format and add them
     DEMO_LOANS_RAW.forEach((rawLoan) => {
@@ -219,7 +227,7 @@ function OnboardingContent() {
     setAdress("Segelflygaren, Stockholm");
     setBoVarde(5000000); // Estimated property value
 
-    router.push("/dashboard");
+    router.push("/dashboard?source=insurely");
   };
 
   const handleSkipToManual = () => {
@@ -318,7 +326,7 @@ function OnboardingContent() {
         <div className="mx-auto max-w-2xl px-4 pb-4 space-y-3">
           {/* Insurely or Question card */}
           {mode === "insurely" ? (
-            <InsurelyEmbed
+            <InsurelyConnect
               onComplete={handleInsurelyComplete}
               onSkip={handleSkipToManual}
               onDemoData={handleDemoData}

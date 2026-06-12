@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useEffect, useRef, useCallback } from "react";
+import { useMemo, useEffect, useRef, useCallback, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useMortgageStore, type Years } from "@/hooks/use-mortgage-store";
@@ -36,9 +37,43 @@ interface ChatContainerProps {
   chatId: string;
 }
 
+// Follow-up questions for missing data after Insurely import
+const FOLLOWUP_QUESTIONS: Array<{
+  field: string;
+  question: string;
+  inputType: "text" | "number";
+  placeholder: string;
+  unit?: string;
+  checkMissing: (state: { boVarde: number; inkomst: number }) => boolean;
+}> = [
+  {
+    field: "propertyValue",
+    question: "Vad är bostadens uppskattade värde?",
+    inputType: "number",
+    placeholder: "T.ex. 3 500 000",
+    unit: "kr",
+    checkMissing: (state) => state.boVarde === 0,
+  },
+  {
+    field: "monthlyIncome",
+    question: "Vad är din månadsinkomst före skatt?",
+    inputType: "number",
+    placeholder: "T.ex. 45 000",
+    unit: "kr",
+    checkMissing: (state) => state.inkomst === 0,
+  },
+];
+
 export function ChatContainer({ chatId }: ChatContainerProps) {
   const processedToolCalls = useRef<Set<string>>(new Set());
+  const hasProcessedInsurelyImport = useRef(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { messages: storedMessages, setMessages: setStoredMessages } = useChatStore();
+
+  // State for direct follow-up questions (not via AI)
+  const [followupQuestionIndex, setFollowupQuestionIndex] = useState<number | null>(null);
+  const [pendingFollowupQuestions, setPendingFollowupQuestions] = useState<typeof FOLLOWUP_QUESTIONS>([]);
 
   const {
     loans,
@@ -121,6 +156,31 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
       setStoredMessages(messages);
     }
   }, [messages, setStoredMessages]);
+
+  // Set up follow-up questions after Insurely import
+  useEffect(() => {
+    const source = searchParams.get("source");
+    if (
+      source === "insurely" &&
+      !hasProcessedInsurelyImport.current &&
+      loans.length > 0
+    ) {
+      hasProcessedInsurelyImport.current = true;
+
+      // Clear the query param
+      router.replace("/dashboard", { scroll: false });
+
+      // Find which questions need to be asked
+      const missingQuestions = FOLLOWUP_QUESTIONS.filter((q) =>
+        q.checkMissing({ boVarde, inkomst })
+      );
+
+      if (missingQuestions.length > 0) {
+        setPendingFollowupQuestions(missingQuestions);
+        setFollowupQuestionIndex(0);
+      }
+    }
+  }, [searchParams, loans.length, boVarde, inkomst, router]);
 
   // Process tool results and update store
   useEffect(() => {
@@ -295,6 +355,53 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
     });
   }, [pendingQuestion, addToolResult]);
 
+  // Get current follow-up question (direct, not via AI)
+  const currentFollowupQuestion = useMemo(() => {
+    if (followupQuestionIndex === null || pendingFollowupQuestions.length === 0) {
+      return null;
+    }
+    return pendingFollowupQuestions[followupQuestionIndex] || null;
+  }, [followupQuestionIndex, pendingFollowupQuestions]);
+
+  // Handle answering a follow-up question
+  const handleFollowupAnswer = useCallback(
+    (value: string | number | string[]) => {
+      if (!currentFollowupQuestion || followupQuestionIndex === null) return;
+
+      const numValue = typeof value === "number" ? value : parseFloat(String(value).replace(/\s/g, ""));
+
+      // Update the store based on the field
+      if (currentFollowupQuestion.field === "propertyValue" && !isNaN(numValue)) {
+        setBoVarde(numValue);
+      } else if (currentFollowupQuestion.field === "monthlyIncome" && !isNaN(numValue)) {
+        setInkomst(numValue);
+      }
+
+      // Move to next question or finish
+      if (followupQuestionIndex < pendingFollowupQuestions.length - 1) {
+        setFollowupQuestionIndex(followupQuestionIndex + 1);
+      } else {
+        // All questions answered
+        setFollowupQuestionIndex(null);
+        setPendingFollowupQuestions([]);
+      }
+    },
+    [currentFollowupQuestion, followupQuestionIndex, pendingFollowupQuestions.length, setBoVarde, setInkomst]
+  );
+
+  // Handle skipping a follow-up question
+  const handleFollowupSkip = useCallback(() => {
+    if (followupQuestionIndex === null) return;
+
+    // Move to next question or finish
+    if (followupQuestionIndex < pendingFollowupQuestions.length - 1) {
+      setFollowupQuestionIndex(followupQuestionIndex + 1);
+    } else {
+      setFollowupQuestionIndex(null);
+      setPendingFollowupQuestions([]);
+    }
+  }, [followupQuestionIndex, pendingFollowupQuestions.length]);
+
   // Convert AI SDK messages to our format
   const formattedMessages: ChatMessage[] = messages.map((m) => ({
     id: m.id,
@@ -320,13 +427,13 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
 
   // Only show suggestions when user has entered some mortgage data, suggestions are loaded, and no pending question
   const hasData = loans.length > 0 || boVarde > 0 || inkomst > 0 || adress !== "";
-  const showSuggestions = hasData && suggestions.length > 0 && !suggestionsLoading && !pendingQuestion;
+  const showSuggestions = hasData && suggestions.length > 0 && !suggestionsLoading && !pendingQuestion && !currentFollowupQuestion;
 
   return (
     <div className="flex h-full flex-col">
       <ChatMessages
         messages={formattedMessages}
-        isLoading={isLoading && !pendingQuestion}
+        isLoading={isLoading && !pendingQuestion && !currentFollowupQuestion}
         onStarterClick={handleSuggestionClick}
       />
       <div className="relative flex-shrink-0 px-5 pb-5 pt-4">
@@ -337,6 +444,25 @@ export function ChatContainer({ chatId }: ChatContainerProps) {
               question={pendingQuestion.args}
               onAnswer={handleQuestionAnswer}
               onSkip={handleQuestionSkip}
+            />
+          </div>
+        )}
+        {/* Question Card for direct follow-up questions (after Insurely import) */}
+        {currentFollowupQuestion && !pendingQuestion && (
+          <div className="mb-4">
+            <QuestionCard
+              question={{
+                field: currentFollowupQuestion.field,
+                question: currentFollowupQuestion.question,
+                inputType: currentFollowupQuestion.inputType,
+                placeholder: currentFollowupQuestion.placeholder,
+                unit: currentFollowupQuestion.unit,
+                options: [],
+                allowCustom: true,
+                allowMultiple: false,
+              }}
+              onAnswer={handleFollowupAnswer}
+              onSkip={handleFollowupSkip}
             />
           </div>
         )}
