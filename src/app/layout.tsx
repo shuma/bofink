@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bolåneplaner - Svensk Bolåneplanering",
-  description: "Planera ditt bolån med AI-driven rådgivning",
+  title: "Pluto - Build Apps with AI",
+  description: "Describe what you want to build and Pluto will create it for you",
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="sv"
+      lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, jetbrainsMono.variable, "font-sans", inter.variable, figtreeHeading.variable)}
     >
       <body className="h-full">
