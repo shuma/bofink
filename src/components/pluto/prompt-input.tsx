@@ -55,9 +55,12 @@ export function PromptInput({
       <div className="relative">
         <div
           className={cn(
-            'relative rounded-3xl border border-border/50 bg-background',
-            'shadow-sm transition-all duration-200',
-            'focus-within:ring-2 focus-within:ring-primary/20 focus-within:shadow-md'
+            'relative rounded-3xl',
+            'bg-[image:var(--gradient-input-fill)]',
+            'shadow-[var(--shadow-input-base)]',
+            'transition-all duration-200',
+            'hover:shadow-[var(--shadow-input-hover)]',
+            'focus-within:shadow-[var(--shadow-input-focus),var(--glow-input-focus)]'
           )}
         >
           <textarea
@@ -69,11 +72,11 @@ export function PromptInput({
             disabled={isLoading}
             rows={1}
             className={cn(
-              'w-full resize-none bg-transparent px-4 py-4 pr-14',
-              'text-foreground placeholder:text-muted-foreground',
+              'w-full resize-none bg-transparent px-5 py-4 pr-16',
+              'text-foreground placeholder:text-muted-foreground/60',
               'focus:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              'min-h-[56px] max-h-[200px]'
+              'min-h-[60px] max-h-[200px]'
             )}
           />
           <Button
@@ -81,11 +84,15 @@ export function PromptInput({
             disabled={!value.trim() || isLoading}
             size="icon"
             className={cn(
-              'absolute right-2 bottom-2 h-10 w-10 rounded-full',
+              'absolute right-3 bottom-3 h-10 w-10 rounded-full',
               'transition-all duration-200',
               value.trim() && !isLoading
-                ? 'bg-foreground text-background hover:bg-foreground/90'
-                : 'bg-muted text-muted-foreground'
+                ? [
+                    'bg-foreground text-background',
+                    'shadow-[var(--shadow-button-neutral)]',
+                    'hover:bg-foreground/90 hover:shadow-[var(--shadow-button-neutral-hover)]',
+                  ].join(' ')
+                : 'bg-muted text-muted-foreground shadow-none'
             )}
           >
             {isLoading ? (
@@ -105,10 +112,13 @@ export function PromptInput({
             onClick={() => setValue(prompt)}
             disabled={isLoading}
             className={cn(
-              'px-3 py-1.5 text-sm rounded-full',
-              'bg-muted/50 text-muted-foreground',
-              'hover:bg-muted hover:text-foreground',
-              'transition-colors duration-200',
+              'px-3.5 py-2 text-sm rounded-xl',
+              'bg-[image:var(--gradient-input-fill)]',
+              'shadow-[var(--shadow-button-neutral)]',
+              'text-muted-foreground',
+              'transition-all duration-200',
+              'hover:shadow-[var(--shadow-button-neutral-hover)]',
+              'hover:text-foreground',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           >

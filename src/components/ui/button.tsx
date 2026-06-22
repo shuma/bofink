@@ -8,15 +8,25 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
-        outline:
-          "border-border/60 bg-background shadow-sm hover:bg-muted hover:text-foreground hover:border-border aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
-        ghost:
-          "hover:bg-muted/80 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        default: [
+          "bg-primary text-primary-foreground",
+          "shadow-[var(--shadow-button-primary)]",
+          "hover:shadow-[var(--shadow-button-primary-hover)] hover:bg-primary/90"
+        ].join(" "),
+        outline: [
+          "border-border/60 bg-background",
+          "shadow-[var(--shadow-button-neutral)]",
+          "hover:shadow-[var(--shadow-button-neutral-hover)]",
+          "hover:bg-muted hover:text-foreground hover:border-border",
+          "aria-expanded:bg-muted aria-expanded:text-foreground"
+        ].join(" "),
+        secondary: [
+          "bg-secondary text-secondary-foreground",
+          "shadow-[var(--shadow-button-neutral)]",
+          "hover:shadow-[var(--shadow-button-neutral-hover)] hover:bg-secondary/80"
+        ].join(" "),
+        ghost: "hover:bg-muted/80 hover:text-foreground aria-expanded:bg-muted",
+        destructive: "bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

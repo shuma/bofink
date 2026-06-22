@@ -1,4 +1,4 @@
-// Lovable-style Vite + React SPA template
+// Vite + React SPA template
 // Plain Vite + React + React Router (client-only) — no SSR/meta-framework, so
 // there's no server-entry/getRouter version coupling to break on `npm install`.
 

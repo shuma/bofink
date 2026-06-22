@@ -104,6 +104,41 @@
   --sidebar-accent-foreground: oklch(0.25 0.015 260);
   --sidebar-border: oklch(0.92 0.006 80);
   --sidebar-ring: oklch(0.6 0.15 250);
+
+  /* === Design Tokens === */
+
+  /* Switch Component */
+  --_switch-shadow-track:
+    inset 0 1px 2px oklch(0 0 0 / 0.08),
+    inset 0 0 0 1px oklch(0 0 0 / 0.06);
+  --_switch-shadow-track-hover:
+    inset 0 1px 3px oklch(0 0 0 / 0.1),
+    inset 0 0 0 1px oklch(0 0 0 / 0.08),
+    0 0 0 3px oklch(0.6 0.18 250 / 0.1);
+  --_switch-shadow-thumb:
+    0 1px 3px oklch(0 0 0 / 0.12),
+    0 1px 2px oklch(0 0 0 / 0.08),
+    inset 0 1px 0 oklch(1 0 0 / 0.5);
+  --_switch-gradient-track-off: linear-gradient(180deg, oklch(0.94 0.008 80) 0%, oklch(0.92 0.006 80) 100%);
+  --_switch-gradient-track-on: linear-gradient(180deg, oklch(0.62 0.18 250) 0%, oklch(0.58 0.17 250) 100%);
+  --_switch-gradient-thumb: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.97 0.002 80) 100%);
+
+  /* Input/Chatbar */
+  --gradient-input-fill: linear-gradient(180deg, oklch(0.995 0.002 85) 0%, oklch(0.985 0.003 85) 100%);
+  --shadow-input-base: 0 1px 2px oklch(0 0 0 / 0.04), 0 0 0 1px oklch(0 0 0 / 0.06);
+  --shadow-input-hover: 0 1px 3px oklch(0 0 0 / 0.06), 0 0 0 1px oklch(0 0 0 / 0.08);
+  --shadow-input-focus: 0 1px 3px oklch(0 0 0 / 0.06), 0 0 0 1px oklch(0.6 0.18 250 / 0.4), 0 0 0 4px oklch(0.6 0.18 250 / 0.12);
+  --glow-input-focus: 0 0 12px oklch(0.6 0.18 250 / 0.15);
+
+  /* Button Shadows */
+  --shadow-button-primary: 0 1px 3px oklch(0.6 0.18 250 / 0.3), 0 1px 2px oklch(0 0 0 / 0.06);
+  --shadow-button-primary-hover: 0 2px 6px oklch(0.6 0.18 250 / 0.4), 0 1px 2px oklch(0 0 0 / 0.08);
+  --shadow-button-neutral: 0 1px 2px oklch(0 0 0 / 0.06), 0 0 0 1px oklch(0 0 0 / 0.08);
+  --shadow-button-neutral-hover: 0 2px 4px oklch(0 0 0 / 0.08), 0 0 0 1px oklch(0 0 0 / 0.1);
+
+  /* Translucent Backgrounds */
+  --bg-translucent: oklch(1 0 0 / 0.6);
+  --bg-depth: oklch(0.975 0.004 85);
 }
 
 .dark {

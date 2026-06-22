@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Forge AI Web App Builder
+# Pluto AI Web App Builder
 
-This is **Forge** - an AI-powered web app builder.
+This is **Pluto** - an AI-powered web app builder.
 
 ## Tech Stack
 - Next.js 16.2.4 (App Router)
@@ -18,8 +18,8 @@ This is **Forge** - an AI-powered web app builder.
 
 ## Key Files
 - `src/lib/mcp/daytona.ts` - Daytona MCP client
-- `src/lib/forge/tools.ts` - Sandbox tools (use `inputSchema`)
-- `src/lib/forge/schemas.ts` - Zod schemas (no min/max on arrays for Anthropic API)
+- `src/lib/pluto/tools.ts` - Sandbox tools (use `inputSchema`)
+- `src/lib/pluto/schemas.ts` - Zod schemas (no min/max on arrays for Anthropic API)
 - `src/app/api/plan/` - Planning routes
 - `src/app/api/projects/[id]/` - Build/message routes
 
