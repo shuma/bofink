@@ -9,6 +9,9 @@ import {
   Code,
   Layers,
   X,
+  RefreshCw,
+  ExternalLink,
+  AppWindow,
 } from 'lucide-react'
 import { PreviewPanel } from './preview-panel'
 import { LogsPanel } from './logs-panel'
@@ -30,6 +33,7 @@ import {
 } from '@/components/ai-elements/prompt-input'
 import { SplitPanelLayout } from '@/components/layouts'
 import { cn } from '@/lib/utils'
+import { usePreviewUrl } from '@/hooks/use-preview-url'
 import type { BuildLogEntry, AskUserRequest, Project, LineSelection } from '@/types/pluto'
 import type { UIMessage } from 'ai'
 
@@ -68,6 +72,22 @@ export function BuildWorkspace({
   const [activeTab, setActiveTab] = useState<'preview' | 'logs' | 'code'>('preview')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
+  const [previewKey, setPreviewKey] = useState(0)
+
+  // Preview URL
+  const { data: previewUrl } = usePreviewUrl(
+    project.id,
+    project.daytona_sandbox_id,
+    isBuilding
+  )
+
+  const handleRefreshPreview = useCallback(() => {
+    setPreviewKey((k) => k + 1)
+  }, [])
+
+  const handleOpenExternal = useCallback(() => {
+    if (previewUrl) window.open(previewUrl, '_blank')
+  }, [previewUrl])
 
   // Handle line selection from CodePanel
   const handleLineSelection = useCallback((selection: LineSelection | null) => {
@@ -424,6 +444,32 @@ export function BuildWorkspace({
               <Layers className="h-3.5 w-3.5" />
             </button>
           </div>
+
+          {/* URL bar - only show when preview tab is active */}
+          {activeTab === 'preview' && previewUrl && (
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] text-muted-foreground">
+                <AppWindow className="h-3 w-3 shrink-0" />
+                <span className="truncate">{previewUrl}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRefreshPreview}
+                aria-label="Reload preview"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenExternal}
+                aria-label="Open in new tab"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -433,6 +479,7 @@ export function BuildWorkspace({
               projectId={project.id}
               sandboxId={project.daytona_sandbox_id}
               isBuilding={isBuilding}
+              refreshKey={previewKey}
             />
           </div>
           <div className={cn('h-full', activeTab !== 'logs' && 'hidden')}>

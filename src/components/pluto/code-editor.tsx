@@ -170,7 +170,7 @@ export function CodeEditor({
                 <code>
                   {tokens.map((line, lineIndex) => {
                     const lineNumber = lineIndex + 1
-                    const lineProps = getLineProps({ line, key: lineIndex })
+                    const { key: _lineKey, ...lineProps } = getLineProps({ line })
                     const isSelected = isLineSelected(lineNumber)
 
                     return (
@@ -192,12 +192,15 @@ export function CodeEditor({
                           {lineNumber}
                         </span>
                         <span className="table-cell">
-                          {line.map((token, tokenIndex) => (
-                            <span
-                              key={tokenIndex}
-                              {...getTokenProps({ token, key: tokenIndex })}
-                            />
-                          ))}
+                          {line.map((token, tokenIndex) => {
+                            const { key: _tokenKey, ...tokenProps } = getTokenProps({ token })
+                            return (
+                              <span
+                                key={tokenIndex}
+                                {...tokenProps}
+                              />
+                            )
+                          })}
                         </span>
                       </div>
                     )
