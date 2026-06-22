@@ -100,3 +100,26 @@ export interface AskUserRequest {
   }[]
   allowCustom?: boolean
 }
+
+// Database message record (maps to messages table)
+export interface DBMessage {
+  id: string
+  project_id: string
+  message_id: string
+  role: 'system' | 'user' | 'assistant'
+  parts: unknown[]
+  metadata: unknown | null
+  sequence_num: number
+  created_at: string
+}
+
+// Database build log record (maps to build_logs table)
+export interface DBBuildLog {
+  id: string
+  project_id: string
+  message_id: string | null
+  type: 'info' | 'command' | 'output' | 'error' | 'success'
+  message: string
+  step: string | null
+  created_at: string
+}

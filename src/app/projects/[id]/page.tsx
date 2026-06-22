@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback, use, useMemo, useRef } from 'react'
+import { useEffect, useState, useCallback, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
 import { Button } from '@/components/ui/button'
 import { BuildWorkspace } from '@/components/pluto/build-workspace'
 import { createClient } from '@/lib/supabase/client'
 import { useProjectRealtime } from '@/hooks/use-realtime'
+import { usePersistedChat } from '@/hooks/use-persisted-chat'
 import type { Project, AskUserRequest } from '@/types/pluto'
 
 export default function ProjectPage({
@@ -24,21 +23,16 @@ export default function ProjectPage({
   // Guard so the initial build is only triggered once (StrictMode double-invokes effects)
   const buildStartedRef = useRef(false)
 
-  // Create transport for this project
-  const transport = useMemo(
-    () => new DefaultChatTransport({ api: `/api/projects/${projectId}/build` }),
-    [projectId]
-  )
-
-  // Chat hook for build agent
+  // Persisted chat hook for build agent
   const {
     messages,
     sendMessage,
     status,
     addToolResult,
     stop,
-  } = useChat({
-    transport,
+    isLoadingHistory,
+  } = usePersistedChat({
+    projectId,
     onError: (err) => {
       console.error('Chat error:', err)
       setError('Build failed. Please try again.')
@@ -65,19 +59,24 @@ export default function ProjectPage({
 
       setProject(data)
       setIsLoading(false)
-
-      // If project is in building status and no messages, start the build.
-      // The ref guard prevents a duplicate build from StrictMode's double effect.
-      if (data.status === 'building' && messages.length === 0 && !buildStartedRef.current) {
-        buildStartedRef.current = true
-        // Send a trigger message - the route will use the plan for context
-        sendMessage({ text: 'Build the application.' })
-      }
     }
 
     fetchProject()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
+
+  // Trigger initial build after history is loaded (if needed)
+  useEffect(() => {
+    // Wait for both project and history to load
+    if (!project || isLoadingHistory) return
+
+    // If project is in building status and no messages from history, start the build.
+    // The ref guard prevents a duplicate build from StrictMode's double effect.
+    if (project.status === 'building' && messages.length === 0 && !buildStartedRef.current) {
+      buildStartedRef.current = true
+      // Send a trigger message - the route will use the plan for context
+      sendMessage({ text: 'Build the application.' })
+    }
+  }, [project, isLoadingHistory, messages.length, sendMessage])
 
   // Listen for realtime updates
   useProjectRealtime(projectId, (updatedProject) => {
@@ -134,12 +133,14 @@ export default function ProjectPage({
     [askUserRequest, addToolResult]
   )
 
-  if (isLoading) {
+  if (isLoading || isLoadingHistory) {
     return (
       <div className="min-h-svh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Loading project...</p>
+          <p className="text-muted-foreground">
+            {isLoading ? 'Loading project...' : 'Loading conversation history...'}
+          </p>
         </div>
       </div>
     )
