@@ -4,17 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import {
   FileText,
   Globe,
-  SquareTerminal,
-  RefreshCw,
-  ExternalLink,
-  AppWindow,
   Mic,
   ChevronDown,
   Code,
   Layers,
 } from 'lucide-react'
-import { PreviewFrame } from './preview-frame'
-import { BuildLog } from './build-log'
+import { PreviewPanel } from './preview-panel'
+import { LogsPanel } from './logs-panel'
+import { CodePanel } from './code-panel'
 import { AskUserModal } from './ask-user-modal'
 import { StatusCard } from './status-card'
 import {
@@ -67,41 +64,8 @@ export function BuildWorkspace({
   askUserRequest,
   onBack,
 }: BuildWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<'preview' | 'logs'>('preview')
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewKey, setPreviewKey] = useState(0)
+  const [activeTab, setActiveTab] = useState<'preview' | 'logs' | 'code'>('preview')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const handlePreviewRefresh = () => setPreviewKey((k) => k + 1)
-  const handleOpenExternal = () => {
-    if (previewUrl) window.open(previewUrl, '_blank')
-  }
-
-  // Fetch fresh preview URL when project has a sandbox and isn't building
-  useEffect(() => {
-    async function fetchPreviewUrl() {
-      if (!project.daytona_sandbox_id || isBuilding) {
-        setPreviewUrl(null)
-        return
-      }
-
-      setPreviewLoading(true)
-      try {
-        const res = await fetch(`/api/projects/${project.id}/preview`)
-        if (res.ok) {
-          const data = await res.json()
-          setPreviewUrl(data.url)
-        }
-      } catch (err) {
-        console.error('Failed to fetch preview URL:', err)
-      } finally {
-        setPreviewLoading(false)
-      }
-    }
-
-    fetchPreviewUrl()
-  }, [project.id, project.daytona_sandbox_id, isBuilding, project.status])
 
   // Build logs from messages
   const buildLogs: BuildLogEntry[] = messages
@@ -354,7 +318,7 @@ export function BuildWorkspace({
         </div>
       </SplitPanelLayout.Left>
 
-      {/* Right side - Preview/Logs */}
+      {/* Right side - Preview/Logs/Code */}
       <SplitPanelLayout.Right>
         {/* Menubar */}
         <div className="flex items-center gap-2 px-3 py-1.5">
@@ -388,16 +352,25 @@ export function BuildWorkspace({
               <FileText className="h-3.5 w-3.5 shrink-0" />
               {activeTab === 'logs' && <span>Build Logs</span>}
             </button>
-            {activeTab !== 'logs' && (
+            {activeTab !== 'logs' && activeTab !== 'code' && (
               <div className="view-switcher-divider" />
             )}
             <button
-              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setActiveTab('code')}
+              className={cn(
+                'flex items-center justify-center rounded-full text-xs font-medium transition-all',
+                activeTab === 'code'
+                  ? 'view-switcher-pill gap-1.5 h-6 px-2'
+                  : 'h-6 w-6 text-muted-foreground hover:text-foreground'
+              )}
               aria-label="Code"
             >
-              <Code className="h-3.5 w-3.5" />
+              <Code className="h-3.5 w-3.5 shrink-0" />
+              {activeTab === 'code' && <span>Code</span>}
             </button>
-            <div className="view-switcher-divider" />
+            {activeTab !== 'code' && (
+              <div className="view-switcher-divider" />
+            )}
             <button
               className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Layers"
@@ -405,46 +378,26 @@ export function BuildWorkspace({
               <Layers className="h-3.5 w-3.5" />
             </button>
           </div>
-
-          {/* URL + preview controls */}
-          {previewUrl && (
-            <div className="ml-auto flex min-w-0 items-center gap-1">
-              <div className="flex min-w-0 max-w-[20rem] items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] text-muted-foreground">
-                <AppWindow className="h-3 w-3 shrink-0" />
-                <span className="truncate">{previewUrl}</span>
-              </div>
-              <button
-                type="button"
-                onClick={handlePreviewRefresh}
-                aria-label="Reload preview"
-                className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleOpenExternal}
-                aria-label="Open in new tab"
-                className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto px-3 pb-3">
-          {activeTab === 'preview' ? (
-            <PreviewFrame
-              url={previewUrl}
-              isLoading={isBuilding || previewLoading}
-              refreshKey={previewKey}
-              className="h-full"
+        <div className="flex-1 overflow-hidden">
+          <div className={cn('h-full', activeTab !== 'preview' && 'hidden')}>
+            <PreviewPanel
+              projectId={project.id}
+              sandboxId={project.daytona_sandbox_id}
+              isBuilding={isBuilding}
             />
-          ) : (
-            <BuildLog logs={buildLogs} className="h-full max-h-full" />
-          )}
+          </div>
+          <div className={cn('h-full', activeTab !== 'logs' && 'hidden')}>
+            <LogsPanel logs={buildLogs} />
+          </div>
+          <div className={cn('h-full', activeTab !== 'code' && 'hidden')}>
+            <CodePanel
+              projectId={project.id}
+              sandboxId={project.daytona_sandbox_id}
+            />
+          </div>
         </div>
       </SplitPanelLayout.Right>
 

@@ -123,3 +123,19 @@ export interface DBBuildLog {
   step: string | null
   created_at: string
 }
+
+// File tree node for code viewer
+export interface FileNode {
+  name: string
+  path: string
+  isDir: boolean
+  children?: FileNode[]
+}
+
+// Open file in code editor
+export interface OpenFile {
+  path: string
+  name: string
+  content: string
+  language: string
+}

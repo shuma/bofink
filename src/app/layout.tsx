@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Inter, Figtree } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +37,11 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, jetbrainsMono.variable, "font-sans", inter.variable, figtreeHeading.variable)}
     >
       <body className="h-full">
-        <TooltipProvider delay={0}>
-          {children}
-        </TooltipProvider>
+        <QueryProvider>
+          <TooltipProvider delay={0}>
+            {children}
+          </TooltipProvider>
+        </QueryProvider>
       </body>
     </html>
   );
