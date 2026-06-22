@@ -6,30 +6,31 @@ product
 
 ## Users
 
-Swedish homeowners managing existing mortgages. They're tracking interest rates across banks, calculating monthly costs, planning amortization schedules, and deciding when to refinance or renegotiate terms. They use the tool periodically (when rates change, when binding periods expire, when considering extra payments) rather than daily. They want clarity and control over their housing costs without becoming finance experts.
+Developers and technical creators who want to build web applications faster. They range from experienced engineers prototyping ideas to less technical founders validating concepts. They're comfortable with code but value speed over manual implementation. They use Pluto when starting new projects, iterating on features, or exploring technical approaches. They want a collaborative AI partner that understands their intent and produces production-quality code.
 
 ## Product Purpose
 
-A mortgage planning tool that gives Swedish homeowners a clear view of their housing loans. Users can track multiple loans across different banks, visualize how their debt changes over time, understand their true monthly costs (interest + amortization), and make informed decisions about their mortgage strategy. Success looks like: users feel confident about their mortgage situation and can answer "what if" questions about rates, amortization, and refinancing without spreadsheets or bank visits.
+Pluto is an AI-powered web app builder. Users describe what they want to build in natural language, and Pluto generates working code in a sandboxed environment with live preview. The workflow is conversational: describe a feature, see it built, refine through dialogue. Success looks like: users ship functional web apps in hours instead of days, maintaining full control over the code while letting AI handle the implementation details.
 
 ## Brand Personality
 
-Calm, trustworthy, clear. The voice is that of a knowledgeable friend who happens to understand mortgages. Not a banker in a suit, not a fintech bro. Direct without being cold. Helpful without being patronizing. Swedish sensibility: understated competence over flashy marketing.
+Capable, precise, collaborative. The voice is that of a skilled pair programmer who listens well and executes cleanly. Not a magic wand that hides complexity. Not a chatbot that over-explains. Direct, efficient, technically confident. Shows its work when helpful, stays out of the way when not.
 
 ## Anti-references
 
-- **Generic Swedish bank apps** (Swedbank, SEB, Nordea mobile apps): Stiff, corporate, visually dated. Too many menu layers. Feel like digital versions of branch paperwork.
-- **Overly playful fintech** (Klarna, Revolut): Neon colors, gamification, notification spam. Treats serious financial decisions like entertainment.
-- **Complex financial dashboards** (Bloomberg-style): Overwhelming data density. Assumes users want to become analysts. Too many charts, too many numbers, too little guidance.
+- **Overhyped AI demos** (early GPT wrappers): Promise everything, deliver fragments. Flashy demos that break on real use cases. "Just describe anything!" with no actual depth.
+- **No-code builders** (Webflow, Bubble): Visual editors that fight you when you need real code. Proprietary abstractions that lock you in. Great until you need something custom.
+- **IDE-first AI tools** (GitHub Copilot alone): Helpful for autocomplete, but no vision. Assists line by line without understanding the whole. Requires you to architect everything yourself.
+- **Generic chat interfaces**: Conversational without being productive. Too much back-and-forth, not enough building. Feels like talking instead of making.
 
 ## Design Principles
 
-1. **Clarity over comprehensiveness.** Show the numbers that matter. A single clear answer beats a dashboard of possibilities.
-2. **Calm confidence.** Financial tools often create anxiety. This one should reduce it. Soft edges, breathing room, no urgency theater.
-3. **Swedish directness.** No marketing fluff. Say what something is. If a rate is high, say it's high. Respect the user's intelligence.
-4. **Progressive depth.** Surface the essentials first. Details available on demand, never forced. Works for the quick check and the deep dive.
-5. **Trust through transparency.** Show the math. Explain assumptions. Users should understand why the numbers are what they are.
+1. **Build, don't chat.** Every interaction should move the project forward. Minimize friction between intent and implementation.
+2. **Show the work.** Live preview, visible logs, transparent progress. Users should see what's happening and trust the process.
+3. **Code-first output.** The result is real code in real files. No proprietary formats, no lock-in. Users own what they build.
+4. **Iterate fast.** Quick feedback loops. See changes immediately. Refine through conversation, not configuration.
+5. **Stay out of the way.** The interface serves the build. Minimal chrome, maximum workspace. The app being built is the hero.
 
 ## Accessibility & Inclusion
 
-WCAG AA compliance. 4.5:1 minimum contrast for text. Full keyboard navigation. Screen reader support for all data visualizations (charts should have text alternatives). Support for reduced motion preferences. Consider users with color vision deficiency in chart color choices.
+WCAG AA compliance. 4.5:1 minimum contrast for text. Full keyboard navigation. Screen reader support for build status and logs. Support for reduced motion preferences. Clear focus states throughout the interface.

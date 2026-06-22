@@ -10,6 +10,8 @@ import {
   AppWindow,
   Mic,
   ChevronDown,
+  Code,
+  Layers,
 } from 'lucide-react'
 import { PreviewFrame } from './preview-frame'
 import { BuildLog } from './build-log'
@@ -356,37 +358,58 @@ export function BuildWorkspace({
       <SplitPanelLayout.Right>
         {/* Menubar */}
         <div className="flex items-center gap-2 px-3 py-1.5">
-          <div className="view-switcher-track inline-flex items-center gap-0.5 rounded-full p-0.5">
+          <div className="view-switcher-track inline-flex items-center rounded-full">
             <button
               onClick={() => setActiveTab('preview')}
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium transition-colors',
+                'flex items-center justify-center rounded-full text-xs font-medium transition-all',
                 activeTab === 'preview'
-                  ? 'view-switcher-pill text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'view-switcher-pill gap-1.5 h-6 px-2'
+                  : 'h-6 w-6 text-muted-foreground hover:text-foreground'
               )}
+              aria-label="Preview"
             >
-              <Globe className="h-3.5 w-3.5" />
-              Preview
+              <Globe className="h-3.5 w-3.5 shrink-0" />
+              {activeTab === 'preview' && <span>Preview</span>}
             </button>
+            {activeTab !== 'preview' && activeTab !== 'logs' && (
+              <div className="view-switcher-divider" />
+            )}
             <button
               onClick={() => setActiveTab('logs')}
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium transition-colors',
+                'flex items-center justify-center rounded-full text-xs font-medium transition-all',
                 activeTab === 'logs'
-                  ? 'view-switcher-pill text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'view-switcher-pill gap-1.5 h-6 px-2'
+                  : 'h-6 w-6 text-muted-foreground hover:text-foreground'
               )}
+              aria-label="Build Logs"
             >
-              <SquareTerminal className="h-3.5 w-3.5" />
-              Build Logs
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              {activeTab === 'logs' && <span>Build Logs</span>}
+            </button>
+            {activeTab !== 'logs' && (
+              <div className="view-switcher-divider" />
+            )}
+            <button
+              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Code"
+            >
+              <Code className="h-3.5 w-3.5" />
+            </button>
+            <div className="view-switcher-divider" />
+            <button
+              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Layers"
+            >
+              <Layers className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          {/* URL + preview controls (preview tab only) */}
-          {activeTab === 'preview' && previewUrl && (
-            <div className="ml-auto flex min-w-0 items-center gap-0.5">
-              <div className="flex min-w-0 max-w-[18rem] items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground">
+          {/* URL + preview controls */}
+          {previewUrl && (
+            <div className="ml-auto flex min-w-0 items-center gap-1">
+              <div className="flex min-w-0 max-w-[20rem] items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] text-muted-foreground">
                 <AppWindow className="h-3 w-3 shrink-0" />
                 <span className="truncate">{previewUrl}</span>
               </div>
@@ -394,7 +417,7 @@ export function BuildWorkspace({
                 type="button"
                 onClick={handlePreviewRefresh}
                 aria-label="Reload preview"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
@@ -402,7 +425,7 @@ export function BuildWorkspace({
                 type="button"
                 onClick={handleOpenExternal}
                 aria-label="Open in new tab"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </button>
