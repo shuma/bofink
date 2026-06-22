@@ -77,11 +77,11 @@ export async function POST(
 
       // Install dependencies (5 minute timeout - smaller template = faster)
       console.log('[Build] Installing dependencies...')
-      const installResult = await daytona.runCommand(sandboxId, 'npm install --legacy-peer-deps 2>&1', appDir, 300)
-      console.log(`[Build] npm install exit code: ${installResult.exitCode}`)
+      const installResult = await daytona.runCommand(sandboxId, 'bun install 2>&1', appDir, 300)
+      console.log(`[Build] bun install exit code: ${installResult.exitCode}`)
       if (installResult.exitCode !== 0) {
-        console.error('[Build] npm install failed:', installResult.output.slice(-500))
-        throw new Error('npm install failed')
+        console.error('[Build] bun install failed:', installResult.output.slice(-500))
+        throw new Error('bun install failed')
       }
       console.log('[Build] Dependencies installed')
 

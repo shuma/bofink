@@ -7,11 +7,12 @@ import { CodeEditor } from './code-editor'
 import { StatusCard } from './status-card'
 import { cn } from '@/lib/utils'
 import { useFileTree } from '@/hooks/use-file-tree'
-import type { FileNode, OpenFile } from '@/types/pluto'
+import type { FileNode, OpenFile, LineSelection } from '@/types/pluto'
 
 interface CodePanelProps {
   projectId: string
   sandboxId: string | null
+  onLineSelection?: (selection: LineSelection | null) => void
   className?: string
 }
 
@@ -33,12 +34,22 @@ function getLanguageFromPath(path: string): string {
   return languageMap[ext || ''] || 'text'
 }
 
-export function CodePanel({ projectId, sandboxId, className }: CodePanelProps) {
+export function CodePanel({ projectId, sandboxId, onLineSelection, className }: CodePanelProps) {
   const { data: tree = [], isLoading: loading, error: treeError } = useFileTree(projectId, sandboxId)
   const error = treeError ? (treeError instanceof Error ? treeError.message : 'Failed to load files') : null
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activeFileIndex, setActiveFileIndex] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
+
+  // Handle line selection change
+  const handleLineSelectionChange = useCallback(
+    (selection: LineSelection | null) => {
+      setLineSelection(selection)
+      onLineSelection?.(selection)
+    },
+    [onLineSelection]
+  )
 
   // Handle file selection
   const handleSelectFile = useCallback(
@@ -213,6 +224,16 @@ export function CodePanel({ projectId, sandboxId, className }: CodePanelProps) {
               activeIndex={activeFileIndex}
               onSelectFile={setActiveFileIndex}
               onCloseFile={handleCloseFile}
+              selectedLines={
+                lineSelection &&
+                openFiles[activeFileIndex]?.path === lineSelection.filePath
+                  ? {
+                      startLine: lineSelection.startLine,
+                      endLine: lineSelection.endLine,
+                    }
+                  : null
+              }
+              onLineSelectionChange={handleLineSelectionChange}
               className="h-full"
             />
           </div>

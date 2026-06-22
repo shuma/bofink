@@ -11,7 +11,8 @@ export const templateFiles: Record<string, string> = {
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -49,6 +50,7 @@ export const templateFiles: Record<string, string> = {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "prettier": "^3.5.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vite-tsconfig-paths": "^5.1.4"
@@ -375,6 +377,19 @@ Input.displayName = 'Input'
 export { Input }`,
 
   'public/favicon.ico': '', // Empty placeholder
+
+  '.prettierrc': `{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 80
+}`,
+
+  '.prettierignore': `node_modules
+dist
+build
+`,
 }
 
 export async function scaffoldTemplate(

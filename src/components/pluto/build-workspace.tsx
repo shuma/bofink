@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   FileText,
   Globe,
@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Code,
   Layers,
+  X,
 } from 'lucide-react'
 import { PreviewPanel } from './preview-panel'
 import { LogsPanel } from './logs-panel'
@@ -29,7 +30,7 @@ import {
 } from '@/components/ai-elements/prompt-input'
 import { SplitPanelLayout } from '@/components/layouts'
 import { cn } from '@/lib/utils'
-import type { BuildLogEntry, AskUserRequest, Project } from '@/types/pluto'
+import type { BuildLogEntry, AskUserRequest, Project, LineSelection } from '@/types/pluto'
 import type { UIMessage } from 'ai'
 
 function formatTimestamp(iso: string): string {
@@ -66,6 +67,30 @@ export function BuildWorkspace({
 }: BuildWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'logs' | 'code'>('preview')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
+
+  // Handle line selection from CodePanel
+  const handleLineSelection = useCallback((selection: LineSelection | null) => {
+    setLineSelection(selection)
+  }, [])
+
+  // Clear line selection
+  const clearLineSelection = useCallback(() => {
+    setLineSelection(null)
+  }, [])
+
+  // Format message with line reference
+  const formatMessageWithLineRef = useCallback(
+    (text: string): string => {
+      if (!lineSelection) return text
+      const lineRef =
+        lineSelection.startLine === lineSelection.endLine
+          ? `[${lineSelection.fileName}:${lineSelection.startLine}]`
+          : `[${lineSelection.fileName}:${lineSelection.startLine}-${lineSelection.endLine}]`
+      return `${lineRef} ${text}`
+    },
+    [lineSelection]
+  )
 
   // Build logs from messages
   const buildLogs: BuildLogEntry[] = messages
@@ -263,11 +288,32 @@ export function BuildWorkspace({
 
         {/* Input */}
         <div className="px-4 pb-4">
+          {/* Line selection badge */}
+          {lineSelection && (
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                <Code className="h-3 w-3" />
+                {lineSelection.fileName}:
+                {lineSelection.startLine === lineSelection.endLine
+                  ? lineSelection.startLine
+                  : `${lineSelection.startLine}-${lineSelection.endLine}`}
+                <button
+                  onClick={clearLineSelection}
+                  className="ml-0.5 rounded hover:bg-blue-200"
+                  aria-label="Clear line selection"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            </div>
+          )}
           <PromptInput
             variant="chatbar"
             onSubmit={({ text }) => {
               if (text.trim() && !isBuilding) {
-                onSendMessage(text.trim())
+                const message = formatMessageWithLineRef(text.trim())
+                onSendMessage(message)
+                clearLineSelection()
               }
             }}
           >
@@ -396,6 +442,7 @@ export function BuildWorkspace({
             <CodePanel
               projectId={project.id}
               sandboxId={project.daytona_sandbox_id}
+              onLineSelection={handleLineSelection}
             />
           </div>
         </div>

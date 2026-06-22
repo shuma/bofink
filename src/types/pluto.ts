@@ -139,3 +139,11 @@ export interface OpenFile {
   content: string
   language: string
 }
+
+// Line selection in code editor
+export interface LineSelection {
+  filePath: string
+  fileName: string
+  startLine: number
+  endLine: number
+}

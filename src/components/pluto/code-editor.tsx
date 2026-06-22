@@ -1,15 +1,18 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import { Highlight, themes } from 'prism-react-renderer'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { OpenFile } from '@/types/pluto'
+import type { OpenFile, LineSelection } from '@/types/pluto'
 
 interface CodeEditorProps {
   files: OpenFile[]
   activeIndex: number
   onSelectFile: (index: number) => void
   onCloseFile: (index: number) => void
+  selectedLines?: { startLine: number; endLine: number } | null
+  onLineSelectionChange?: (selection: LineSelection | null) => void
   className?: string
 }
 
@@ -51,9 +54,51 @@ export function CodeEditor({
   activeIndex,
   onSelectFile,
   onCloseFile,
+  selectedLines,
+  onLineSelectionChange,
   className,
 }: CodeEditorProps) {
   const activeFile = files[activeIndex]
+  const [selectionStart, setSelectionStart] = useState<number | null>(null)
+
+  const isLineSelected = useCallback(
+    (lineNumber: number): boolean => {
+      if (!selectedLines) return false
+      return (
+        lineNumber >= selectedLines.startLine &&
+        lineNumber <= selectedLines.endLine
+      )
+    },
+    [selectedLines]
+  )
+
+  const handleLineClick = useCallback(
+    (lineNumber: number, shiftKey: boolean) => {
+      if (!activeFile || !onLineSelectionChange) return
+
+      if (shiftKey && selectionStart !== null) {
+        // Range selection with shift+click
+        const start = Math.min(selectionStart, lineNumber)
+        const end = Math.max(selectionStart, lineNumber)
+        onLineSelectionChange({
+          filePath: activeFile.path,
+          fileName: activeFile.name,
+          startLine: start,
+          endLine: end,
+        })
+      } else {
+        // Single line selection
+        setSelectionStart(lineNumber)
+        onLineSelectionChange({
+          filePath: activeFile.path,
+          fileName: activeFile.name,
+          startLine: lineNumber,
+          endLine: lineNumber,
+        })
+      }
+    },
+    [activeFile, selectionStart, onLineSelectionChange]
+  )
 
   if (files.length === 0) {
     return (
@@ -105,28 +150,46 @@ export function CodeEditor({
 
       {/* Code content */}
       {activeFile && (
-        <div className="flex-1 overflow-auto rounded-br-2xl bg-[#1e1e1e]">
+        <div className="flex-1 overflow-auto rounded-br-2xl bg-white">
           <Highlight
-            theme={themes.vsDark}
+            theme={themes.github}
             code={activeFile.content}
             language={getLanguage(activeFile.name)}
           >
-            {({ className: hlClassName, style, tokens, getLineProps, getTokenProps }) => (
+            {({
+              className: hlClassName,
+              style,
+              tokens,
+              getLineProps,
+              getTokenProps,
+            }) => (
               <pre
                 className={cn(hlClassName, 'p-4 text-sm leading-relaxed')}
                 style={{ ...style, margin: 0, background: 'transparent' }}
               >
                 <code>
                   {tokens.map((line, lineIndex) => {
+                    const lineNumber = lineIndex + 1
                     const lineProps = getLineProps({ line, key: lineIndex })
+                    const isSelected = isLineSelected(lineNumber)
+
                     return (
                       <div
                         key={lineIndex}
                         {...lineProps}
-                        className="table-row"
+                        className={cn(
+                          'table-row cursor-pointer transition-colors',
+                          isSelected && 'bg-blue-100'
+                        )}
+                        onClick={(e) => handleLineClick(lineNumber, e.shiftKey)}
                       >
-                        <span className="table-cell select-none pr-4 text-right text-muted-foreground/50">
-                          {lineIndex + 1}
+                        <span
+                          className={cn(
+                            'table-cell select-none pr-4 text-right',
+                            isSelected ? 'text-blue-600' : 'text-gray-400'
+                          )}
+                        >
+                          {lineNumber}
                         </span>
                         <span className="table-cell">
                           {line.map((token, tokenIndex) => (
