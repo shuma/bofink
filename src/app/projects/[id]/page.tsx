@@ -2,14 +2,12 @@
 
 import { useEffect, useState, useCallback, use, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown } from 'lucide-react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Button } from '@/components/ui/button'
 import { BuildWorkspace } from '@/components/pluto/build-workspace'
 import { createClient } from '@/lib/supabase/client'
 import { useProjectRealtime } from '@/hooks/use-realtime'
-import { cn } from '@/lib/utils'
 import type { Project, AskUserRequest } from '@/types/pluto'
 
 export default function ProjectPage({
@@ -159,51 +157,17 @@ export default function ProjectPage({
   }
 
   return (
-    <div className="h-svh bg-background flex flex-col">
-      {/* Header */}
-      <header className="shrink-0 border-b border-border/50 px-3 py-2.5">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="group flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted"
-            aria-label="Back to projects"
-          >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary font-heading text-xs font-semibold text-primary-foreground">
-              {project.name.charAt(0).toUpperCase()}
-            </span>
-            <span className="truncate font-heading text-sm font-medium">
-              {project.name}
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </button>
-
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span
-              className={cn(
-                'h-2 w-2 rounded-full',
-                project.status === 'ready' && 'bg-green-500',
-                project.status === 'building' && 'bg-blue-500 animate-pulse',
-                project.status === 'error' && 'bg-red-500',
-                project.status === 'planning' && 'bg-yellow-500'
-              )}
-            />
-            <span className="capitalize">{project.status}</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Workspace */}
-      <main className="flex-1 min-h-0">
-        <BuildWorkspace
-          project={project}
-          messages={messages}
-          isBuilding={isChatLoading}
-          onSendMessage={handleSendMessage}
-          onStop={stop}
-          onAskUserResponse={handleAskUserResponse}
-          askUserRequest={askUserRequest}
-        />
-      </main>
+    <div className="h-svh bg-background">
+      <BuildWorkspace
+        project={project}
+        messages={messages}
+        isBuilding={isChatLoading}
+        onSendMessage={handleSendMessage}
+        onStop={stop}
+        onAskUserResponse={handleAskUserResponse}
+        askUserRequest={askUserRequest}
+        onBack={() => router.push('/dashboard')}
+      />
     </div>
   )
 }

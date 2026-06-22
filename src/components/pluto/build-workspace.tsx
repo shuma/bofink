@@ -52,6 +52,7 @@ interface BuildWorkspaceProps {
   onStop: () => void
   onAskUserResponse: (response: string) => void
   askUserRequest: AskUserRequest | null
+  onBack?: () => void
 }
 
 export function BuildWorkspace({
@@ -62,6 +63,7 @@ export function BuildWorkspace({
   onStop,
   onAskUserResponse,
   askUserRequest,
+  onBack,
 }: BuildWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'logs'>('preview')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -212,6 +214,25 @@ export function BuildWorkspace({
     <SplitPanelLayout>
       {/* Left side - Chat */}
       <SplitPanelLayout.Left>
+        {/* Project Header */}
+        <div className="shrink-0 px-3 py-2.5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="group flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted"
+              aria-label="Back to projects"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary font-heading text-xs font-semibold text-primary-foreground">
+                {project.name.charAt(0).toUpperCase()}
+              </span>
+              <span className="truncate font-heading text-sm font-medium">
+                {project.name}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 scrollbar-none">
           {/* Timestamp divider */}

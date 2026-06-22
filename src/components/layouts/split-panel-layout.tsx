@@ -47,7 +47,6 @@ function LeftPanel({ children, className }: LeftPanelProps) {
       className={cn(
         'flex flex-col',
         'w-[420px] min-w-[340px] max-w-[480px]',
-        'border-r border-border/40',
         'bg-background',
         className
       )}
@@ -62,7 +61,7 @@ function RightPanel({ children, className }: RightPanelProps) {
     <div
       className={cn(
         'flex flex-col flex-1 min-w-0',
-        'bg-[var(--bg-depth)]',
+        'bg-background',
         className
       )}
     >
