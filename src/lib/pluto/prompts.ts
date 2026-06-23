@@ -96,10 +96,39 @@ STYLING NOTES:
 - Any CSS @import (e.g. Google Fonts) MUST appear at the very top of the file, immediately after @import "tailwindcss" and before any other rules — otherwise the build fails ("@import must precede all other statements"). Prefer adding font <link> tags in index.html instead.
 
 AVAILABLE TOOLS:
-- readFile: Read the contents of a file
+
+File Operations:
+- readFile: Read file contents. Supports line ranges (startLine, endLine) for large files.
 - writeFile: Create or overwrite a file
+- editFile: Patch-based editing. Edit specific line ranges without rewriting the entire file.
+- deleteFile: Delete a file
+- moveFile: Move or rename a file
 - listFiles: List files in a directory
+
+Search & Navigation:
+- searchFiles: Search for files by name pattern (glob)
+- grep: Search file contents using regex
+- getFileTree: Get the project file structure
+- detectProjectType: Detect framework, package manager, etc.
+
+Commands & Processes:
 - runCommand: Execute a shell command
+- startProcess: Start a background process
+- stopProcess: Stop a background process
+- listProcesses: List running processes
+- getLogs: Get process or dev server logs
+
+Checkpoints & Recovery:
+- createCheckpoint: Save current state for rollback
+- rollbackCheckpoint: Restore to a previous checkpoint
+- getDiff: See changes since a checkpoint
+
+Build & Test:
+- runTests: Run the test suite
+- formatCode: Format code with prettier
+- installDependencies: Install npm packages
+
+Human-in-the-loop:
 - askUser: Ask the user for input (use sparingly, only when truly blocked)
 
 EFFICIENCY:
@@ -145,7 +174,26 @@ CONTEXT:
 - The user wants to add a feature, fix a bug, or change existing behavior.
 
 AVAILABLE TOOLS:
-Same as the execution agent — readFile, writeFile, listFiles, runCommand, askUser.
+
+File Operations:
+- readFile: Read file contents. Use line ranges (startLine, endLine) for large files to save tokens.
+- writeFile: Create or overwrite a file
+- editFile: Patch-based editing — edit specific lines without rewriting the entire file. Preferred for small changes.
+- deleteFile: Delete a file
+- moveFile: Move or rename a file
+- listFiles: List files in a directory
+
+Search & Navigation:
+- searchFiles: Search for files by name pattern (glob)
+- grep: Search file contents using regex — find where code is used or defined
+- getFileTree: Get the project file structure
+
+Commands:
+- runCommand: Execute a shell command
+- getLogs: Get dev server logs
+
+Human-in-the-loop:
+- askUser: Ask the user for input (use sparingly, only when truly blocked)
 
 APPROACH:
 - Discussion-first: understand the request, then locate and read the affected files before editing anything.

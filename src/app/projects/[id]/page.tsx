@@ -23,7 +23,8 @@ export default function ProjectPage({
   // Guard so the initial build is only triggered once (StrictMode double-invokes effects)
   const buildStartedRef = useRef(false)
 
-  // Persisted chat hook for build agent
+  // Persisted chat hook for build/modify agent
+  // Uses /build for initial builds, /message for modifications to ready projects
   const {
     messages,
     sendMessage,
@@ -33,6 +34,8 @@ export default function ProjectPage({
     isLoadingHistory,
   } = usePersistedChat({
     projectId,
+    projectStatus: project?.status,
+    hasSandbox: !!project?.daytona_sandbox_id,
     onError: (err) => {
       console.error('Chat error:', err)
       setError('Build failed. Please try again.')
@@ -57,6 +60,13 @@ export default function ProjectPage({
         return
       }
 
+      console.log('[Project] Loaded from DB:', {
+        id: data.id,
+        status: data.status,
+        hasSandbox: !!data.daytona_sandbox_id,
+        sandboxId: data.daytona_sandbox_id,
+      })
+
       setProject(data)
       setIsLoading(false)
     }
@@ -69,10 +79,19 @@ export default function ProjectPage({
     // Wait for both project and history to load
     if (!project || isLoadingHistory) return
 
+    console.log('[Project] Status check:', {
+      status: project.status,
+      hasSandbox: !!project.daytona_sandbox_id,
+      messageCount: messages.length,
+      buildStarted: buildStartedRef.current,
+    })
+
     // If project is in building status and no messages from history, start the build.
     // The ref guard prevents a duplicate build from StrictMode's double effect.
+    // IMPORTANT: Only trigger for 'building' status, never for 'ready' projects
     if (project.status === 'building' && messages.length === 0 && !buildStartedRef.current) {
       buildStartedRef.current = true
+      console.log('[Project] Triggering initial build...')
       // Send a trigger message - the route will use the plan for context
       sendMessage({ text: 'Build the application.' })
     }

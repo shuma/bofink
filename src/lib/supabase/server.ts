@@ -27,3 +27,6 @@ export async function createClient() {
     }
   )
 }
+
+// Alias for route handlers (same as createClient but clearer naming)
+export const createRouteClient = createClient
