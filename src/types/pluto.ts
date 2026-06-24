@@ -61,6 +61,7 @@ export interface Project {
   source: string
   template: string
   daytona_sandbox_id: string | null
+  letta_agent_id: string | null
   preview_url: string | null
   preview_expires_at: string | null
   status: ProjectStatus
@@ -146,4 +147,62 @@ export interface LineSelection {
   fileName: string
   startLine: number
   endLine: number
+}
+
+// ============================================================================
+// Project Memory Types
+// ============================================================================
+
+// Architecture decision record
+export interface DecisionRecord {
+  id: string
+  decision: string
+  rationale: string
+  timestamp: string
+}
+
+// Task record for tracking work items
+export interface TaskRecord {
+  id: string
+  task: string
+  status: 'pending' | 'in_progress' | 'completed'
+  timestamp: string
+}
+
+// Issue record for tracking known problems
+export interface IssueRecord {
+  id: string
+  issue: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  resolved: boolean
+  timestamp: string
+}
+
+// Project memory for persistent context
+export interface ProjectMemory {
+  id: string
+  project_id: string
+  summary: string | null
+  preferences: Record<string, unknown>
+  decisions: DecisionRecord[]
+  tasks: TaskRecord[]
+  issues: IssueRecord[]
+  conventions: Record<string, string>
+  created_at: string
+  updated_at: string
+}
+
+// File summary record for smart context loading
+export interface FileSummaryRecord {
+  id: string
+  project_id: string
+  file_path: string
+  summary: string | null
+  file_type: string | null
+  exports: string[]
+  imports: string[]
+  line_count: number | null
+  content_hash: string | null
+  created_at: string
+  updated_at: string
 }

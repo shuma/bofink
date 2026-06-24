@@ -8,6 +8,7 @@ import { executionAgentPrompt } from '@/lib/pluto/prompts'
 import { scaffoldTemplate } from '@/lib/pluto/template-archive'
 import { recordTokens, recordTiming } from '@/lib/metrics/sandbox'
 import { compressConversation, needsSummarization } from '@/lib/pluto/conversation'
+import { getProjectMemory, createProjectMemory } from '@/lib/memory'
 import type { BuildPlan } from '@/types/pluto'
 
 /**
@@ -137,8 +138,6 @@ export async function POST(
       )
     }
 
-    console.log('Building with plan:', JSON.stringify(plan, null, 2))
-
     // Get or create sandbox
     let sandboxId = project.daytona_sandbox_id
     let workDir = '/home/daytona'
@@ -233,13 +232,22 @@ export async function POST(
 
     const appDir = `${workDir}/app`
 
-    // Create tools for this sandbox
-    const tools = createSandboxTools(sandboxId, appDir)
+    // Create tools for this sandbox (with projectId for memory operations)
+    const tools = createSandboxTools(sandboxId, appDir, projectId)
+
+    // Initialize project memory for new builds
+    const isInitialBuild = !project.daytona_sandbox_id || messages.length <= 1
+    if (isInitialBuild) {
+      try {
+        await getProjectMemory(projectId)
+        console.log('[Build] Initialized project memory')
+      } catch (err) {
+        console.warn('[Build] Failed to initialize project memory:', err)
+      }
+    }
 
     // For initial builds, construct a detailed message
     // The plan context is also in the system prompt
-    const isInitialBuild = !project.daytona_sandbox_id || messages.length <= 1
-
     let buildMessages = isInitialBuild
       ? [{
           id: 'initial-build',
@@ -255,7 +263,11 @@ Start by listing files in ${appDir} to understand the template structure, then i
         }]
       : cleanMessages(messages)
 
-    console.log(`[Build] Using ${buildMessages.length} messages (${isInitialBuild ? 'initial build' : 'continuation'})`)
+    if (isInitialBuild) {
+      console.log(`[Build] Initial build for "${plan.name}" with ${plan.steps?.length || 0} steps`)
+    } else {
+      console.log(`[Build] Continuation for "${plan.name}" (${buildMessages.length} messages)`)
+    }
 
     // Compress conversation if it's getting too long
     if (!isInitialBuild && needsSummarization(buildMessages)) {
@@ -287,8 +299,13 @@ Start by listing files in ${appDir} to understand the template structure, then i
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(buildMessages, { tools })
 
-    // Build system prompt with plan context
-    const systemPromptWithPlan = `${executionAgentPrompt}
+    // Build system prompt - only include full plan for initial builds
+    // For continuations (modifications), use a lighter context
+    let systemPrompt: string
+
+    if (isInitialBuild) {
+      // Full plan for initial build
+      systemPrompt = `${executionAgentPrompt}
 
 CURRENT PROJECT PLAN:
 App Name: ${plan.name}
@@ -302,12 +319,25 @@ ${plan.steps?.map((s, i) => `${i + 1}. ${s.title}: ${s.description}`).join('\n')
 
 Working Directory: ${appDir}
 `
+    } else {
+      // Lighter context for continuations/modifications
+      systemPrompt = `${executionAgentPrompt}
 
-    // Stream the agent execution
-    // Using sonnet for cost efficiency - opus is 5x more expensive
+PROJECT: ${plan.name}
+DESCRIPTION: ${plan.description || 'No description'}
+WORKING DIRECTORY: ${appDir}
+
+The application has already been built. The user is requesting modifications.
+Use the available tools to inspect files and make changes as needed.
+`
+    }
+
+    console.log(`[Build] System prompt size: ${systemPrompt.length} chars (${isInitialBuild ? 'initial' : 'continuation'})`)
+
+    // Stream the agent execution using AI SDK directly
     const result = streamText({
       model: anthropic('claude-sonnet-4-6'),
-      system: systemPromptWithPlan,
+      system: systemPrompt,
       messages: modelMessages,
       tools,
       // Each plan step typically costs ~2 round-trips (read then write), so a

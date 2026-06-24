@@ -3,9 +3,18 @@ import { z } from 'zod'
 import * as daytona from '@/lib/daytona/client'
 import * as ops from '@/lib/daytona/operations'
 import * as state from '@/lib/daytona/state'
+import { buildProjectContext, formatContextForLLM, summarizeFileWithLLM } from './summarizer'
+import {
+  updateProjectSummary,
+  upsertFileSummary,
+} from '@/lib/memory'
 
 // Create sandbox tools for a specific sandbox
-export function createSandboxTools(sandboxId: string, appDir: string = '/home/daytona/app') {
+export function createSandboxTools(
+  sandboxId: string,
+  appDir: string = '/home/daytona/app',
+  projectId?: string
+) {
   // ============================================================================
   // File Reading (Enhanced with line ranges)
   // ============================================================================
@@ -539,6 +548,102 @@ export function createSandboxTools(sandboxId: string, appDir: string = '/home/da
   })
 
   // ============================================================================
+  // Preview & Summary Tools
+  // ============================================================================
+
+  const previewUrl = tool({
+    description: 'Get the preview URL for the running dev server',
+    inputSchema: z.object({
+      port: z.number().optional().describe('Port number (default: 3000)'),
+    }),
+    execute: async ({ port = 3000 }) => {
+      try {
+        const url = await daytona.getPreviewUrl(sandboxId, port)
+        return { success: true, url }
+      } catch (error) {
+        return {
+          success: false,
+          error: `Failed to get preview URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }
+      }
+    },
+  })
+
+  const summarizeProject = tool({
+    description: 'Generate a summary of the project structure and purpose. Stores the summary in database memory for future context.',
+    inputSchema: z.object({}),
+    execute: async () => {
+      try {
+        const context = await buildProjectContext(sandboxId, appDir)
+        const formattedSummary = formatContextForLLM(context)
+
+        // Store in database memory if projectId is provided
+        if (projectId) {
+          await updateProjectSummary(projectId, formattedSummary).catch((err) => {
+            console.warn('[summarizeProject] Failed to store summary in memory:', err)
+          })
+        }
+
+        return {
+          success: true,
+          summary: formattedSummary,
+          components: context.summary.components.length,
+          pages: context.summary.pages.length,
+          hooks: context.summary.hooks.length,
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: `Failed to summarize project: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }
+      }
+    },
+  })
+
+  const summarizeFile = tool({
+    description: 'Generate an AI-powered summary of a specific file, including its purpose, key functions, and dependencies.',
+    inputSchema: z.object({
+      path: z.string().describe('Path to the file to summarize'),
+    }),
+    execute: async ({ path }) => {
+      try {
+        const summary = await summarizeFileWithLLM(sandboxId, path)
+
+        // Store in database memory if projectId is provided
+        if (projectId) {
+          await upsertFileSummary(projectId, path, {
+            summary: summary.aiSummary,
+            file_type: summary.type,
+            exports: summary.exports,
+            imports: summary.imports,
+            line_count: summary.lineCount,
+            content_hash: summary.hash,
+          }).catch((err) => {
+            console.warn('[summarizeFile] Failed to store file summary in memory:', err)
+          })
+        }
+
+        return {
+          success: true,
+          path: summary.path,
+          type: summary.type,
+          purpose: summary.purpose,
+          aiSummary: summary.aiSummary,
+          keyFunctions: summary.keyFunctions,
+          exports: summary.exports,
+          dependencies: summary.dependencies,
+          lineCount: summary.lineCount,
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: `Failed to summarize file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }
+      }
+    },
+  })
+
+  // ============================================================================
   // Human-in-the-loop
   // ============================================================================
 
@@ -600,6 +705,11 @@ export function createSandboxTools(sandboxId: string, appDir: string = '/home/da
     formatCode,
     installDependencies,
 
+    // Preview & Summary
+    previewUrl,
+    summarizeProject,
+    summarizeFile,
+
     // Human-in-the-loop
     askUser,
   }
@@ -613,4 +723,60 @@ export type AskUserArgs = {
     value: string
   }>
   allowCustom?: boolean
+}
+
+/**
+ * Raw tool definition for use with Letta or other providers
+ */
+export interface RawToolDefinition {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+  execute: (args: Record<string, unknown>) => Promise<unknown>
+}
+
+/**
+ * Create raw sandbox tools (not wrapped with AI SDK tool())
+ * Used for Letta client-side tools integration
+ */
+export function createSandboxToolsRaw(
+  sandboxId: string,
+  appDir: string = '/home/daytona/app'
+): Record<string, RawToolDefinition> {
+  // Get the AI SDK tools
+  const aiTools = createSandboxTools(sandboxId, appDir)
+
+  // Extract raw definitions from each tool
+  const rawTools: Record<string, RawToolDefinition> = {}
+
+  for (const [name, aiTool] of Object.entries(aiTools)) {
+    // AI SDK v6 tools have: description, inputSchema (Zod), execute
+    const toolDef = aiTool as {
+      description?: string
+      inputSchema?: { toJSONSchema?: () => Record<string, unknown> }
+      execute?: (args: unknown) => Promise<unknown>
+    }
+
+    // Convert Zod schema to JSON schema using Zod v4's built-in method
+    let jsonSchema: Record<string, unknown> = { type: 'object', properties: {} }
+    if (toolDef.inputSchema?.toJSONSchema) {
+      jsonSchema = toolDef.inputSchema.toJSONSchema()
+      // Remove $schema property as Letta may not expect it
+      delete jsonSchema['$schema']
+    }
+
+    rawTools[name] = {
+      name,
+      description: toolDef.description || `Tool: ${name}`,
+      parameters: jsonSchema,
+      execute: async (args: Record<string, unknown>) => {
+        if (toolDef.execute) {
+          return toolDef.execute(args)
+        }
+        throw new Error(`Tool ${name} has no execute function`)
+      },
+    }
+  }
+
+  return rawTools
 }

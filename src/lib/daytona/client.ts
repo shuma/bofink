@@ -210,14 +210,36 @@ async function startDevServerSession(sandbox: Sandbox, appDir: string): Promise<
 
 export async function ensureSandboxRunning(sandboxId: string): Promise<void> {
   // Force refresh to get current sandbox state
-  const sandbox = await getSandbox(sandboxId, true)
+  let sandbox = await getSandbox(sandboxId, true)
 
   // Start the sandbox first if needed. getWorkDir / process calls resolve the
   // container IP, which only exists once the sandbox is started — calling them
   // on a stopped/archived sandbox fails with "failed to resolve container IP".
   if (sandbox.state !== 'started') {
     console.log(`[Daytona] Sandbox ${sandboxId} is ${sandbox.state}, starting...`)
-    await sandbox.start()
+
+    // Retry logic for 409 Conflict (state change in progress)
+    const maxRetries = 5
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        await sandbox.start()
+        break
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number })?.statusCode
+        if (statusCode === 409 && attempt < maxRetries - 1) {
+          // Another request is starting the sandbox, wait and check state
+          console.log(`[Daytona] Sandbox state change in progress, waiting... (attempt ${attempt + 1}/${maxRetries})`)
+          await sleep(2000)
+          sandbox = await getSandbox(sandboxId, true)
+          if (sandbox.state === 'started') {
+            console.log('[Daytona] Sandbox was started by another request')
+            break
+          }
+          continue
+        }
+        throw err
+      }
+    }
 
     // Wait for sandbox to be ready
     await sandbox.waitUntilStarted()

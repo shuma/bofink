@@ -5,7 +5,7 @@ import * as daytona from '@/lib/daytona/client'
 import { createSandboxTools } from '@/lib/pluto/tools'
 import { modificationAgentPrompt } from '@/lib/pluto/prompts'
 import { buildProjectContext, formatContextForLLM } from '@/lib/pluto/summarizer'
-import * as state from '@/lib/daytona/state'
+import * as sandboxState from '@/lib/daytona/state'
 import { recordTokens } from '@/lib/metrics/sandbox'
 import {
   compressConversation,
@@ -18,6 +18,7 @@ import {
   formatFocusedContext,
   createContextState,
 } from '@/lib/pluto/context'
+import { getProjectMemory, formatMemoryForLLM } from '@/lib/memory'
 
 export const maxDuration = 300 // 5 minutes
 
@@ -157,10 +158,20 @@ export async function POST(
     const appDir = `${workDir}/app`
 
     // Record activity to keep sandbox alive
-    await state.recordActivity(sandboxId).catch(() => {})
+    await sandboxState.recordActivity(sandboxId).catch(() => {})
 
-    // Create tools for this sandbox
-    const tools = createSandboxTools(sandboxId, appDir)
+    // Create tools for this sandbox (with projectId for memory operations)
+    const tools = createSandboxTools(sandboxId, appDir, projectId)
+
+    // Load project memory for context
+    let memoryContext = ''
+    try {
+      const memory = await getProjectMemory(projectId)
+      memoryContext = formatMemoryForLLM(memory)
+      console.log(`[Message] Loaded project memory (${memory.decisions.length} decisions, ${memory.tasks.length} tasks)`)
+    } catch (err) {
+      console.warn('[Message] Failed to load project memory:', err)
+    }
 
     // Extract user's latest message for context-aware retrieval
     const latestUserMessage = messages
@@ -210,7 +221,7 @@ export async function POST(
       }
     }
 
-    // Build context about the project
+    // Build context about the project including memory
     const projectContext = `
 PROJECT: ${project.name}
 DESCRIPTION: ${project.description}
@@ -219,14 +230,13 @@ WORKING DIRECTORY: ${appDir}
 
 The application has already been built. The user is requesting modifications.
 
-${projectContextStr}
+${memoryContext ? `## Project Memory\n${memoryContext}\n\n` : ''}${projectContextStr}
 `
 
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(messages, { tools })
 
-    // Stream the agent execution
-    // Using sonnet for cost efficiency
+    // Stream the agent execution using AI SDK directly
     const result = streamText({
       model: anthropic('claude-sonnet-4-6'),
       system: `${modificationAgentPrompt}
@@ -285,10 +295,10 @@ ${projectContext}`,
             .eq('id', projectId)
 
           // Update sandbox state
-          await state.recordDevServerState(sandboxId, true, 3000).catch(() => {})
+          await sandboxState.recordDevServerState(sandboxId, true, 3000).catch(() => {})
         } catch (err) {
           console.error('Error restarting dev server:', err)
-          await state.recordBuild(sandboxId, false, String(err)).catch(() => {})
+          await sandboxState.recordBuild(sandboxId, false, String(err)).catch(() => {})
         }
       },
     })

@@ -12,7 +12,7 @@ export const templateFiles: Record<string, string> = {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\""
+    "format": "prettier --write \\"src/**/*.{ts,tsx,js,jsx,json,css}\\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
