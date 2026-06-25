@@ -99,6 +99,7 @@ export interface CreateSandboxResult {
 export async function createSandbox(): Promise<CreateSandboxResult> {
   const result = await callDaytonaTool('create_sandbox', {
     language: 'typescript',
+    region: 'eu',
   })
   console.log('create_sandbox result:', JSON.stringify(result, null, 2))
 
@@ -177,6 +178,7 @@ export async function getPreviewUrl(
   const result = await callDaytonaTool('preview_link', {
     sandbox_id: sandboxId,
     port,
+    expires_in_seconds: 3600, // 1 hour
   })
   return result as string
 }
