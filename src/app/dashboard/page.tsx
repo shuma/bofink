@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { ProjectCard } from '@/components/pluto/project-card'
 import { createClient } from '@/lib/supabase/client'
 import type { Project } from '@/types/pluto'
@@ -63,62 +62,77 @@ export default function DashboardPage() {
   return (
     <div className="min-h-svh bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-heading text-xl font-medium">Pluto</span>
-          </div>
+      <header className="border-b border-border/40 sticky top-0 z-10 bg-background">
+        <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-6 lg:px-8">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2.5 hover:opacity-70 transition-opacity"
+          >
+            <span className="h-6 w-6 rounded-full bg-foreground" />
+            <span className="font-heading text-base font-semibold">Pluto</span>
+          </button>
           <div className="flex items-center gap-4">
-            <Button onClick={() => router.push('/')}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-            <Button variant="ghost" onClick={handleSignOut}>
+            <button
+              onClick={() => router.push('/')}
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-primary-foreground bg-foreground rounded-full hover:bg-foreground/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Project</span>
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               Sign Out
-            </Button>
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-8">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-heading font-semibold mb-6">
+      <main className="px-6 lg:px-8 py-10">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-xl font-heading font-semibold text-foreground mb-8">
             My Projects
           </h1>
 
           {isLoading && (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="flex items-center justify-center py-24">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           )}
 
           {error && (
-            <div className="text-center py-20">
-              <p className="text-destructive mb-4">{error}</p>
-              <Button onClick={() => window.location.reload()}>Retry</Button>
+            <div className="text-center py-24">
+              <p className="text-sm text-destructive mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+              >
+                Retry
+              </button>
             </div>
           )}
 
           {!isLoading && !error && projects.length === 0 && (
-            <div className="text-center py-20">
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h2 className="text-lg font-medium mb-2">No projects yet</h2>
-              <p className="text-muted-foreground mb-6">
-                Create your first app with AI
+            <div className="text-center py-24">
+              <div className="h-10 w-10 rounded-full bg-foreground/10 mx-auto mb-4" />
+              <h2 className="text-base font-medium text-foreground mb-1">No projects yet</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Start building your first app
               </p>
-              <Button onClick={() => router.push('/')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Project
-              </Button>
+              <button
+                onClick={() => router.push('/')}
+                className="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-primary-foreground bg-foreground rounded-full hover:bg-foreground/90 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Project</span>
+              </button>
             </div>
           )}
 
           {!isLoading && !error && projects.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}

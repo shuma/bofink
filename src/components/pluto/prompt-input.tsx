@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ArrowUp, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PromptInputProps {
@@ -13,10 +12,10 @@ interface PromptInputProps {
 }
 
 const EXAMPLE_PROMPTS = [
-  'A recipe sharing app where users can save and organize recipes',
-  'A simple habit tracker with streaks and daily reminders',
-  'A portfolio site with project showcase and contact form',
-  'A bookmark manager with tags and search',
+  'Recipe sharing app',
+  'Habit tracker with streaks',
+  'Portfolio website',
+  'Bookmark manager',
 ]
 
 export function PromptInput({
@@ -55,12 +54,10 @@ export function PromptInput({
       <div className="relative">
         <div
           className={cn(
-            'relative rounded-3xl',
-            'bg-[image:var(--gradient-input-fill)]',
-            'shadow-[var(--shadow-input-base)]',
-            'transition-all duration-200',
-            'hover:shadow-[var(--shadow-input-hover)]',
-            'focus-within:shadow-[var(--shadow-input-focus),var(--glow-input-focus)]'
+            'relative rounded-2xl',
+            'bg-card ring-1 ring-border/60',
+            'transition-all duration-150',
+            'focus-within:ring-foreground/20'
           )}
         >
           <textarea
@@ -72,35 +69,31 @@ export function PromptInput({
             disabled={isLoading}
             rows={1}
             className={cn(
-              'w-full resize-none bg-transparent px-5 py-4 pr-16',
-              'text-foreground placeholder:text-muted-foreground/60',
+              'w-full resize-none bg-transparent px-4 py-3.5 pr-14',
+              'text-[15px] text-foreground placeholder:text-muted-foreground/50',
               'focus:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              'min-h-[60px] max-h-[200px]'
+              'min-h-[52px] max-h-[200px]'
             )}
           />
-          <Button
+          <button
             onClick={handleSubmit}
             disabled={!value.trim() || isLoading}
-            size="icon"
             className={cn(
-              'absolute right-3 bottom-3 h-10 w-10 rounded-full',
-              'transition-all duration-200',
+              'absolute right-2.5 bottom-2.5 h-8 w-8 rounded-full',
+              'inline-flex items-center justify-center',
+              'transition-all duration-150',
               value.trim() && !isLoading
-                ? [
-                    'bg-foreground text-background',
-                    'shadow-[var(--shadow-button-neutral)]',
-                    'hover:bg-foreground/90 hover:shadow-[var(--shadow-button-neutral-hover)]',
-                  ].join(' ')
-                : 'bg-muted text-muted-foreground shadow-none'
+                ? 'bg-foreground text-background hover:bg-foreground/90'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
             )}
           >
             {isLoading ? (
-              <Sparkles className="h-4 w-4 animate-pulse" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
               <ArrowUp className="h-4 w-4" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -112,17 +105,15 @@ export function PromptInput({
             onClick={() => setValue(prompt)}
             disabled={isLoading}
             className={cn(
-              'px-3.5 py-2 text-sm rounded-xl',
-              'bg-[image:var(--gradient-input-fill)]',
-              'shadow-[var(--shadow-button-neutral)]',
+              'px-3 py-1.5 text-[13px] rounded-full',
+              'bg-transparent ring-1 ring-border/60',
               'text-muted-foreground',
-              'transition-all duration-200',
-              'hover:shadow-[var(--shadow-button-neutral-hover)]',
-              'hover:text-foreground',
+              'transition-colors duration-150',
+              'hover:ring-border hover:text-foreground',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           >
-            {prompt.length > 40 ? prompt.slice(0, 40) + '...' : prompt}
+            {prompt}
           </button>
         ))}
       </div>

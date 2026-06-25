@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation'
 import { ExternalLink, Trash2, MoreVertical } from 'lucide-react'
-import { Card } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,18 +16,18 @@ interface ProjectCardProps {
   onDelete?: (id: string) => void
 }
 
-function getStatusColor(status: Project['status']) {
+function getStatusStyles(status: Project['status']) {
   switch (status) {
     case 'ready':
-      return 'bg-green-500/20 text-green-600'
+      return 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20'
     case 'building':
-      return 'bg-blue-500/20 text-blue-600'
+      return 'bg-blue-500/10 text-blue-600 ring-blue-500/20'
     case 'error':
-      return 'bg-red-500/20 text-red-600'
+      return 'bg-red-500/10 text-red-600 ring-red-500/20'
     case 'planning':
-      return 'bg-yellow-500/20 text-yellow-600'
+      return 'bg-amber-500/10 text-amber-600 ring-amber-500/20'
     default:
-      return 'bg-muted text-muted-foreground'
+      return 'bg-muted text-muted-foreground ring-border'
   }
 }
 
@@ -63,34 +62,36 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
   }
 
   return (
-    <Card
+    <article
       className={cn(
-        'p-4 cursor-pointer transition-all duration-200',
-        'hover:shadow-md hover:ring-1 hover:ring-border/60'
+        'group relative flex flex-col rounded-xl bg-card p-4 cursor-pointer',
+        'ring-1 ring-border/50 transition-all duration-150',
+        'hover:ring-border hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)]'
       )}
       onClick={handleClick}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-foreground truncate">{project.name}</h3>
-          {project.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {project.description}
-            </p>
-          )}
-        </div>
-
+      {/* Header row: title + menu */}
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-heading text-[15px] font-medium text-foreground leading-snug truncate">
+          {project.name}
+        </h3>
         <DropdownMenu>
           <DropdownMenuTrigger
             onClick={(e) => e.stopPropagation()}
-            className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className={cn(
+              'shrink-0 -mr-1 -mt-0.5 h-7 w-7 inline-flex items-center justify-center rounded-md',
+              'text-muted-foreground/60 transition-colors',
+              'hover:bg-muted hover:text-foreground',
+              'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+              'opacity-0 group-hover:opacity-100'
+            )}
           >
             <MoreVertical className="h-4 w-4" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="min-w-[140px]">
             {project.preview_url && (
               <DropdownMenuItem onClick={handleOpenPreview}>
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className="h-3.5 w-3.5 mr-2" />
                 Open Preview
               </DropdownMenuItem>
             )}
@@ -98,26 +99,34 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
               onClick={handleDelete}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="h-3.5 w-3.5 mr-2" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      {/* Description */}
+      {project.description && (
+        <p className="text-[13px] leading-relaxed text-muted-foreground line-clamp-2 mt-1.5">
+          {project.description}
+        </p>
+      )}
+
+      {/* Footer: status + date */}
+      <div className="flex items-center justify-between mt-auto pt-4">
         <span
           className={cn(
-            'px-2 py-0.5 text-xs font-medium rounded-full',
-            getStatusColor(project.status)
+            'inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-md ring-1 ring-inset',
+            getStatusStyles(project.status)
           )}
         >
           {project.status}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-[11px] text-muted-foreground/70 tabular-nums">
           {formatDate(project.created_at)}
         </span>
       </div>
-    </Card>
+    </article>
   )
 }
