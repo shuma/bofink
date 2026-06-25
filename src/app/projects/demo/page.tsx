@@ -179,7 +179,7 @@ export default function DemoPage() {
                 return (
                   <div
                     key={`${message.id}-${index}`}
-                    className="rounded-2xl border border-border/60 bg-muted/30 px-5 py-4"
+                    className="inline-block max-w-full rounded-2xl rounded-br-sm border border-border/40 bg-white px-5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                   >
                     <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
                       {content}
@@ -191,7 +191,7 @@ export default function DemoPage() {
               return (
                 <div
                   key={`${message.id}-${index}`}
-                  className="rounded-2xl border border-border/70 bg-card p-3.5"
+                  className="rounded-2xl border border-border/40 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">
@@ -205,7 +205,7 @@ export default function DemoPage() {
                     {content}
                   </p>
                   {project.plan?.name && (
-                    <div className="mt-2.5 flex items-center gap-2 border-t border-border/60 pt-2.5 text-sm text-muted-foreground">
+                    <div className="mt-2.5 flex items-center gap-1.5 border-t border-border/40 pt-2.5 text-sm text-muted-foreground">
                       <FileText className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">
                         <span className="font-medium text-foreground">Plan:</span>{' '}
@@ -218,7 +218,7 @@ export default function DemoPage() {
             })}
 
             {isBuilding && (
-              <div className="flex items-center gap-2 rounded-2xl border border-border/70 bg-card p-3.5">
+              <div className="flex items-center gap-2 rounded-2xl border border-border/40 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <span className="text-sm text-muted-foreground">Thinking...</span>
               </div>

@@ -192,7 +192,7 @@ export function BuildWorkspace({
               return (
                 <div
                   key={`${message.id}-${index}`}
-                  className="rounded-2xl border border-border/60 bg-muted/30 px-5 py-4"
+                  className="inline-block max-w-full rounded-2xl rounded-br-sm border border-border/40 bg-white px-5 py-4 shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.28),0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a]"
                 >
                   <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
                     {content}
@@ -206,7 +206,7 @@ export function BuildWorkspace({
             return (
               <div
                 key={`${message.id}-${index}`}
-                className="rounded-2xl border border-border/70 bg-card p-3.5"
+                className="rounded-2xl border border-border/40 bg-white p-3.5 shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.28),0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a]"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-foreground">
