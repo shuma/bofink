@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Inter, Figtree } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { InterfaceKit } from "interface-kit/react";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
         <QueryProvider>
           <TooltipProvider delay={0}>
             {children}
+            {process.env.NODE_ENV === 'development' && <InterfaceKit />}
           </TooltipProvider>
         </QueryProvider>
       </body>

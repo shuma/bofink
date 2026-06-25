@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PromptInput } from '@/components/pluto/prompt-input'
 import { AuthModal } from '@/components/pluto/auth-modal'
+import { PlutoOrb } from '@/components/pluto/pluto-orb'
 import { usePlutoStore } from '@/hooks/use-pluto-store'
 
 function HomePageContent() {
@@ -61,7 +62,7 @@ function HomePageContent() {
           {/* Header */}
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="h-8 w-8 rounded-full bg-foreground" />
+              <PlutoOrb size={32} />
               <span className="font-heading text-xl font-semibold">Pluto</span>
             </div>
             <h1 className="font-heading text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
