@@ -34,7 +34,8 @@ import {
 import { SplitPanelLayout } from '@/components/layouts'
 import { cn } from '@/lib/utils'
 import { usePreviewUrl } from '@/hooks/use-preview-url'
-import type { BuildLogEntry, AskUserRequest, Project, LineSelection } from '@/types/pluto'
+import { useBuildLogs } from '@/hooks/use-build-logs'
+import type { AskUserRequest, Project, LineSelection } from '@/types/pluto'
 import type { UIMessage } from 'ai'
 
 function formatTimestamp(iso: string): string {
@@ -112,88 +113,11 @@ export function BuildWorkspace({
     [lineSelection]
   )
 
-  // Build logs from messages
-  const buildLogs: BuildLogEntry[] = messages
-    .filter((m) => m.role === 'assistant')
-    .flatMap((m) => {
-      const logs: BuildLogEntry[] = []
-
-      // Parse parts
-      if (m.parts) {
-        m.parts.forEach((part, partIndex) => {
-          // Handle text parts
-          if (part.type === 'text' && 'text' in part) {
-            logs.push({
-              id: `${m.id}-${partIndex}-text`,
-              timestamp: new Date().toISOString(),
-              type: 'info',
-              message: part.text,
-            })
-          }
-
-          // Handle tool parts (new v6 structure)
-          if ('toolCallId' in part) {
-            const toolPart = part as {
-              toolCallId: string
-              type?: string
-              state?: string
-              input?: Record<string, unknown>
-              output?: Record<string, unknown>
-            }
-
-            // Get tool name from type (e.g., "tool-runCommand")
-            const toolName = toolPart.type?.replace('tool-', '') || 'tool'
-
-            if (toolName === 'runCommand' && toolPart.input?.command) {
-              logs.push({
-                id: `${m.id}-${partIndex}-cmd`,
-                timestamp: new Date().toISOString(),
-                type: 'command',
-                message: `$ ${toolPart.input.command}`,
-              })
-            } else if (toolName === 'writeFile' && toolPart.input?.path) {
-              logs.push({
-                id: `${m.id}-${partIndex}-write`,
-                timestamp: new Date().toISOString(),
-                type: 'info',
-                message: `Writing file: ${toolPart.input.path}`,
-              })
-            } else if (toolName === 'readFile' && toolPart.input?.path) {
-              logs.push({
-                id: `${m.id}-${partIndex}-read`,
-                timestamp: new Date().toISOString(),
-                type: 'info',
-                message: `Reading file: ${toolPart.input.path}`,
-              })
-            }
-
-            // Add output if available
-            if (toolPart.output) {
-              if (toolPart.output.success === false) {
-                logs.push({
-                  id: `${m.id}-${partIndex}-error`,
-                  timestamp: new Date().toISOString(),
-                  type: 'error',
-                  message: String(toolPart.output.error || 'Operation failed'),
-                })
-              } else if (toolPart.output.output) {
-                const output = String(toolPart.output.output)
-                if (output.length > 0) {
-                  logs.push({
-                    id: `${m.id}-${partIndex}-output`,
-                    timestamp: new Date().toISOString(),
-                    type: 'output',
-                    message: output.slice(0, 500),
-                  })
-                }
-              }
-            }
-          }
-        })
-      }
-
-      return logs
-    })
+  // Fetch build logs from API - only when logs tab is visible
+  const { data: buildLogs = [] } = useBuildLogs(project.id, {
+    isVisible: activeTab === 'logs',
+    isBuilding,
+  })
 
   // Auto-scroll messages
   useEffect(() => {
@@ -245,25 +169,32 @@ export function BuildWorkspace({
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 scrollbar-none">
-          {/* Timestamp divider */}
-          <p className="text-center text-xs text-muted-foreground/70">
-            {formatTimestamp(project.created_at)}
-          </p>
+        <div className="relative flex-1 overflow-hidden">
+          {/* Top fade */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-background to-transparent" />
+
+          {/* Bottom fade */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-background to-transparent" />
+
+          <div className="h-full overflow-y-auto px-4 py-5 space-y-4 scrollbar-none">
+            {/* Timestamp divider */}
+            <p className="text-center text-xs text-muted-foreground/70" suppressHydrationWarning>
+              {formatTimestamp(project.created_at)}
+            </p>
 
           {messages.map((message, index) => {
             const content = getMessageContent(message)
             // Skip empty bubbles (e.g. assistant turns that are only tool calls)
             if (!content.trim()) return null
 
-            // User turns sit in a warm cream bubble.
+            // User message bubble
             if (message.role === 'user') {
               return (
                 <div
                   key={`${message.id}-${index}`}
-                  className="rounded-2xl bg-secondary px-4 py-3"
+                  className="rounded-2xl border border-border/60 bg-muted/30 px-5 py-4"
                 >
-                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                  <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
                     {content}
                   </p>
                 </div>
@@ -301,13 +232,14 @@ export function BuildWorkspace({
             )
           })}
 
-          {isBuilding && <StatusCard label="Building…" />}
+            {isBuilding && <StatusCard label="Building…" />}
 
-          <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} />
+          </div>
         </div>
 
         {/* Input */}
-        <div className="px-4 pb-4">
+        <div className="px-4 pt-2 pb-4">
           {/* Line selection badge */}
           {lineSelection && (
             <div className="mb-2 flex items-center gap-2">
@@ -473,24 +405,28 @@ export function BuildWorkspace({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className={cn('h-full', activeTab !== 'preview' && 'hidden')}>
-            <PreviewPanel
-              projectId={project.id}
-              sandboxId={project.daytona_sandbox_id}
-              isBuilding={isBuilding}
-              refreshKey={previewKey}
-            />
-          </div>
-          <div className={cn('h-full', activeTab !== 'logs' && 'hidden')}>
-            <LogsPanel logs={buildLogs} />
-          </div>
-          <div className={cn('h-full', activeTab !== 'code' && 'hidden')}>
-            <CodePanel
-              projectId={project.id}
-              sandboxId={project.daytona_sandbox_id}
-              onLineSelection={handleLineSelection}
-            />
+        <div className="flex-1 overflow-hidden px-3 pb-3">
+          <div className="h-full rounded-lg border border-border bg-card overflow-hidden shadow-[0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a,0px_3px_3px_-1.5px_#0000000a,0px_6px_6px_-3px_#0000000a,0px_12px_12px_-6px_#0000000a,0px_24px_24px_-12px_#0000000a]">
+            <div className={cn('h-full', activeTab !== 'preview' && 'hidden')}>
+              <PreviewPanel
+                projectId={project.id}
+                sandboxId={project.daytona_sandbox_id}
+                isBuilding={isBuilding}
+                refreshKey={previewKey}
+                noPadding
+              />
+            </div>
+            <div className={cn('h-full', activeTab !== 'logs' && 'hidden')}>
+              <LogsPanel logs={buildLogs} noPadding />
+            </div>
+            <div className={cn('h-full', activeTab !== 'code' && 'hidden')}>
+              <CodePanel
+                projectId={project.id}
+                sandboxId={project.daytona_sandbox_id}
+                onLineSelection={handleLineSelection}
+                noPadding
+              />
+            </div>
           </div>
         </div>
       </SplitPanelLayout.Right>

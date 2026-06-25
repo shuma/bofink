@@ -8,6 +8,7 @@ interface PreviewFrameProps {
   isLoading?: boolean
   refreshKey?: number
   className?: string
+  noPadding?: boolean
 }
 
 export function PreviewFrame({
@@ -15,12 +16,14 @@ export function PreviewFrame({
   isLoading = false,
   refreshKey = 0,
   className,
+  noPadding = false,
 }: PreviewFrameProps) {
   if (!url) {
     return (
       <div
         className={cn(
-          'flex items-center justify-center rounded-2xl border border-border bg-card',
+          'flex items-center justify-center bg-card',
+          !noPadding && 'rounded-2xl border border-border',
           'min-h-[400px]',
           className
         )}
@@ -39,7 +42,8 @@ export function PreviewFrame({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border border-border bg-card',
+        'overflow-hidden bg-card',
+        !noPadding && 'rounded-2xl border border-border',
         className
       )}
     >

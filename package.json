@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.72",
+    "@ai-sdk/openai": "^3.0.74",
     "@ai-sdk/react": "^3.0.172",
     "@base-ui/react": "^1.4.1",
     "@daytona/sdk": "^0.187.0",
@@ -17,6 +18,7 @@
     "@letta-ai/letta-code-sdk": "^0.2.1",
     "@letta-ai/vercel-ai-sdk-provider": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@morphllm/morphsdk": "^0.2.184",
     "@phosphor-icons/react": "^2.1.10",
     "@streamdown/cjk": "^1.0.3",
     "@streamdown/code": "^1.1.1",

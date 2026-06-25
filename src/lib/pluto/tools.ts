@@ -9,6 +9,47 @@ import {
   upsertFileSummary,
 } from '@/lib/memory'
 
+// Dynamic import for MorphClient to avoid bundling native binaries
+// The morphsdk includes @vscode/ripgrep which has native binaries
+let morphClientPromise: Promise<typeof import('@morphllm/morphsdk')> | null = null
+
+async function getMorphClient() {
+  if (!process.env.MORPH_API_KEY) {
+    console.log('[Morph] MORPH_API_KEY not set, Morph tools disabled')
+    return null
+  }
+
+  if (!morphClientPromise) {
+    console.log('[Morph] Loading MorphClient...')
+    morphClientPromise = import('@morphllm/morphsdk')
+  }
+
+  const { MorphClient } = await morphClientPromise
+  console.log('[Morph] MorphClient initialized')
+  return new MorphClient({ apiKey: process.env.MORPH_API_KEY })
+}
+
+async function withMorphFallback<T>(
+  morphCall: () => Promise<T>,
+  fallback: () => Promise<T>,
+  toolName: string = 'unknown'
+): Promise<T> {
+  if (!process.env.MORPH_API_KEY) {
+    console.log(`[Morph] ${toolName}: No API key, using fallback`)
+    return fallback()
+  }
+
+  try {
+    console.log(`[Morph] ${toolName}: Calling Morph API...`)
+    const result = await morphCall()
+    console.log(`[Morph] ${toolName}: Success`)
+    return result
+  } catch (error) {
+    console.warn(`[Morph] ${toolName}: Failed, falling back:`, error)
+    return fallback()
+  }
+}
+
 // Create sandbox tools for a specific sandbox
 export function createSandboxTools(
   sandboxId: string,
@@ -33,6 +74,7 @@ export function createSandboxTools(
           const result = await ops.readFileWithLines(sandboxId, path, { startLine, endLine })
           return {
             success: true,
+            path,
             content: result.content,
             totalLines: result.totalLines,
             startLine: result.startLine,
@@ -47,6 +89,7 @@ export function createSandboxTools(
 
         return {
           success: true,
+          path,
           content: truncated.content,
           totalLines: content.split('\n').length,
           wasTruncated: truncated.wasTruncated,
@@ -54,6 +97,7 @@ export function createSandboxTools(
       } catch (error) {
         return {
           success: false,
+          path,
           error: `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         }
       }
@@ -75,10 +119,11 @@ export function createSandboxTools(
         await daytona.writeFile(sandboxId, path, content)
         // Track file modification
         await state.recordFileModification(sandboxId, path, 'modified').catch(() => {})
-        return { success: true, message: `File written: ${path}` }
+        return { success: true, path, message: `File written: ${path}` }
       } catch (error) {
         return {
           success: false,
+          path,
           error: `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         }
       }
@@ -260,6 +305,213 @@ export function createSandboxTools(
   })
 
   // ============================================================================
+  // Morph-Powered Tools (Fast Apply & Semantic Search)
+  // ============================================================================
+
+  const applyEdit = tool({
+    description: `Apply code changes using intelligent merge. Use "// ... existing code ..." markers to indicate unchanged sections. This is much faster than rewriting entire files.
+
+Example:
+\`\`\`
+// ... existing code ...
+function handleAuth() {
+  if (!user) throw new Error("Not authenticated")  // NEW LINE
+  // ... existing code ...
+}
+\`\`\``,
+    inputSchema: z.object({
+      path: z.string().describe('The file path to edit'),
+      codeEdit: z.string().describe('Code with "// ... existing code ..." markers for unchanged sections'),
+      instructions: z.string().optional().describe('Natural language instructions for the edit'),
+    }),
+    execute: async ({ path, codeEdit, instructions }): Promise<{ success: boolean; path?: string; method?: string; error?: string }> => {
+      console.log(`[applyEdit] Execute called for path: "${path}"`)
+      console.log(`[applyEdit] MORPH_API_KEY set: ${!!process.env.MORPH_API_KEY}`)
+
+      const fallbackEdit = async (): Promise<{ success: boolean; path?: string; method?: string; error?: string }> => {
+        // Fallback: treat codeEdit as full content and use writeFile
+        try {
+          await daytona.writeFile(sandboxId, path, codeEdit)
+          await state.recordFileModification(sandboxId, path, 'modified').catch(() => {})
+          return { success: true, path, method: 'writeFile' }
+        } catch (error) {
+          return {
+            success: false,
+            error: `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          }
+        }
+      }
+
+      return withMorphFallback(
+        async (): Promise<{ success: boolean; path?: string; method?: string; error?: string }> => {
+          const morph = await getMorphClient()
+          if (!morph) throw new Error('Morph not configured')
+
+          // Read original file content
+          let originalContent: string
+          try {
+            originalContent = await daytona.readFile(sandboxId, path)
+          } catch {
+            // File doesn't exist, use codeEdit as full content
+            originalContent = ''
+          }
+
+          // Use Morph Fast Apply (10,500 tok/s)
+          const result = await morph.fastApply.applyEdit({
+            originalCode: originalContent,
+            codeEdit: codeEdit,
+            instruction: instructions || 'Apply the edit',
+          })
+
+          if (!result.success || !result.mergedCode) {
+            return {
+              success: false,
+              error: result.error || 'Fast Apply failed',
+            }
+          }
+
+          // Write the merged result to sandbox
+          await daytona.writeFile(sandboxId, path, result.mergedCode)
+          await state.recordFileModification(sandboxId, path, 'modified').catch(() => {})
+
+          return { success: true, path, method: 'fastApply' }
+        },
+        fallbackEdit,
+        'applyEdit'
+      )
+    },
+  })
+
+  const warpGrep = tool({
+    description: 'Semantic search across the codebase using natural language. Finds relevant files based on meaning, not just text patterns.',
+    inputSchema: z.object({
+      query: z.string().describe('Natural language search query (e.g., "where is authentication handled")'),
+    }),
+    execute: async ({ query }): Promise<{
+      success: boolean
+      contexts?: Array<{ file: string; content: string }>
+      summary?: string
+      error?: string
+      method?: string
+    }> => {
+      console.log(`[warpGrep] Execute called with query: "${query}"`)
+      console.log(`[warpGrep] MORPH_API_KEY set: ${!!process.env.MORPH_API_KEY}`)
+
+      const fallbackGrep = async (): Promise<{
+        success: boolean
+        contexts?: Array<{ file: string; content: string }>
+        summary?: string
+        error?: string
+        method?: string
+      }> => {
+        // Fallback to regular grep with simple pattern extraction
+        try {
+          // Extract keywords from query for basic grep
+          const keywords = query
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((w) => w.length > 3 && !['where', 'what', 'how', 'the', 'is', 'are', 'does'].includes(w))
+          const pattern = keywords.slice(0, 3).join('|')
+
+          if (!pattern) {
+            return { success: false, error: 'Could not extract search terms from query', method: 'fallback' }
+          }
+
+          const result = await ops.grep(sandboxId, {
+            pattern,
+            path: appDir,
+            ignoreCase: true,
+            maxMatches: 20,
+          })
+
+          return {
+            success: true,
+            contexts: result.matches.map((m) => ({
+              file: m.file,
+              content: `Line ${m.line}: ${m.content}`,
+            })),
+            summary: `Found ${result.totalMatches} matches using keyword search`,
+            method: 'grep_fallback',
+          }
+        } catch (error) {
+          return {
+            success: false,
+            error: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            method: 'grep_fallback',
+          }
+        }
+      }
+
+      return withMorphFallback(
+        async (): Promise<{
+          success: boolean
+          contexts?: Array<{ file: string; content: string }>
+          summary?: string
+          error?: string
+          method?: string
+        }> => {
+          const morph = await getMorphClient()
+          if (!morph) throw new Error('Morph not configured')
+
+          // Use Morph WarpGrep for semantic search with remoteCommands for Daytona sandbox
+          const result = await morph.warpGrep.execute({
+            searchTerm: query,
+            repoRoot: appDir,
+            // remoteCommands allows WarpGrep to execute file operations in the Daytona sandbox
+            remoteCommands: {
+              grep: async (pattern, path, glob) => {
+                // Run ripgrep in sandbox, return file paths
+                const globArg = glob ? `--glob '${glob}'` : ''
+                const res = await daytona.runCommand(
+                  sandboxId,
+                  `rg -l ${globArg} '${pattern}' '${path}' 2>/dev/null || true`,
+                  appDir
+                )
+                return res.output
+              },
+              read: async (filepath, start, end) => {
+                // Read specific line range from file
+                const res = await daytona.runCommand(
+                  sandboxId,
+                  `sed -n '${start},${end}p' '${filepath}'`,
+                  appDir
+                )
+                return res.output
+              },
+              listDir: async (dirpath, maxDepth) => {
+                // List directory contents up to max depth
+                const res = await daytona.runCommand(
+                  sandboxId,
+                  `find '${dirpath}' -maxdepth ${maxDepth} -type f 2>/dev/null || true`,
+                  appDir
+                )
+                return res.output
+              },
+            },
+          })
+
+          if (!result.success) {
+            return {
+              success: false,
+              error: result.error || 'WarpGrep search failed',
+              method: 'warpGrep',
+            }
+          }
+
+          return {
+            success: true,
+            contexts: result.contexts,
+            summary: result.summary,
+            method: 'warpGrep',
+          }
+        },
+        fallbackGrep,
+        'warpGrep'
+      )
+    },
+  })
+
+  // ============================================================================
   // File Tree Navigation
   // ============================================================================
 
@@ -326,6 +578,7 @@ export function createSandboxTools(
 
         return {
           success: result.exitCode === 0,
+          command, // Include command in result for logging
           exitCode: result.exitCode,
           output: truncated.content,
           wasTruncated: truncated.wasTruncated,
@@ -333,6 +586,7 @@ export function createSandboxTools(
       } catch (error) {
         return {
           success: false,
+          command, // Include command even on error
           error: `Failed to run command: ${error instanceof Error ? error.message : 'Unknown error'}`,
         }
       }
@@ -681,6 +935,10 @@ export function createSandboxTools(
     // Search
     searchFiles,
     grep,
+
+    // Morph-powered tools
+    applyEdit,
+    warpGrep,
 
     // Navigation
     getFileTree,

@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { getModelForTask, getModelId } from '@/lib/ai'
 import * as daytona from '@/lib/daytona/client'
 import { createSandboxTools } from '@/lib/pluto/tools'
 import { modificationAgentPrompt } from '@/lib/pluto/prompts'
@@ -236,9 +236,12 @@ ${memoryContext ? `## Project Memory\n${memoryContext}\n\n` : ''}${projectContex
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(messages, { tools })
 
+    const model = getModelForTask('modification')
+    console.log(`[Message] Using model: ${getModelId('modification')}`)
+
     // Stream the agent execution using AI SDK directly
     const result = streamText({
-      model: anthropic('claude-sonnet-4-6'),
+      model,
       system: `${modificationAgentPrompt}
 
 ${projectContext}`,

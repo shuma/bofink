@@ -4,14 +4,11 @@ import { useState, useCallback } from 'react'
 import { Lock, Copy, Download, Check } from 'lucide-react'
 import { FileTree } from './file-tree'
 import { CodeEditor } from './code-editor'
-import { StatusCard } from './status-card'
 import { cn } from '@/lib/utils'
-import { useFileTree } from '@/hooks/use-file-tree'
+import { DEMO_FILE_TREE, DEMO_FILE_CONTENTS } from '@/lib/demo/mock-data'
 import type { FileNode, OpenFile, LineSelection } from '@/types/pluto'
 
-interface CodePanelProps {
-  projectId: string
-  sandboxId: string | null
+interface DemoCodePanelProps {
   onLineSelection?: (selection: LineSelection | null) => void
   className?: string
   noPadding?: boolean
@@ -35,9 +32,7 @@ function getLanguageFromPath(path: string): string {
   return languageMap[ext || ''] || 'text'
 }
 
-export function CodePanel({ projectId, sandboxId, onLineSelection, className, noPadding = false }: CodePanelProps) {
-  const { data: tree = [], isLoading: loading, error: treeError } = useFileTree(projectId, sandboxId)
-  const error = treeError ? (treeError instanceof Error ? treeError.message : 'Failed to load files') : null
+export function DemoCodePanel({ onLineSelection, className, noPadding = false }: DemoCodePanelProps) {
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([])
   const [activeFileIndex, setActiveFileIndex] = useState(0)
   const [copied, setCopied] = useState(false)
@@ -52,9 +47,9 @@ export function CodePanel({ projectId, sandboxId, onLineSelection, className, no
     [onLineSelection]
   )
 
-  // Handle file selection
+  // Handle file selection - use mock data instead of API
   const handleSelectFile = useCallback(
-    async (node: FileNode) => {
+    (node: FileNode) => {
       if (node.isDir) return
 
       // Check if file is already open
@@ -64,36 +59,26 @@ export function CodePanel({ projectId, sandboxId, onLineSelection, className, no
         return
       }
 
-      // Fetch file content
-      try {
-        const res = await fetch(
-          `/api/projects/${projectId}/files?action=content&path=${encodeURIComponent(node.path)}`
-        )
-        if (!res.ok) {
-          throw new Error('Failed to fetch file content')
-        }
-        const data = await res.json()
+      // Get content from mock data
+      const content = DEMO_FILE_CONTENTS[node.path] || `// Content for ${node.name}`
 
-        const newFile: OpenFile = {
-          path: node.path,
-          name: node.name,
-          content: data.content || '',
-          language: getLanguageFromPath(node.path),
-        }
-
-        setOpenFiles((prev) => {
-          // If at max, close the oldest file
-          const files = prev.length >= MAX_OPEN_FILES ? prev.slice(1) : prev
-          return [...files, newFile]
-        })
-        setActiveFileIndex(
-          openFiles.length >= MAX_OPEN_FILES ? MAX_OPEN_FILES - 1 : openFiles.length
-        )
-      } catch (err) {
-        console.error('Failed to fetch file content:', err)
+      const newFile: OpenFile = {
+        path: node.path,
+        name: node.name,
+        content,
+        language: getLanguageFromPath(node.path),
       }
+
+      setOpenFiles((prev) => {
+        // If at max, close the oldest file
+        const files = prev.length >= MAX_OPEN_FILES ? prev.slice(1) : prev
+        return [...files, newFile]
+      })
+      setActiveFileIndex(
+        openFiles.length >= MAX_OPEN_FILES ? MAX_OPEN_FILES - 1 : openFiles.length
+      )
     },
-    [projectId, openFiles]
+    [openFiles]
   )
 
   const handleCloseFile = useCallback(
@@ -139,38 +124,6 @@ export function CodePanel({ projectId, sandboxId, onLineSelection, className, no
 
   const selectedPath = openFiles[activeFileIndex]?.path || null
 
-  if (!sandboxId) {
-    return (
-      <div className={cn('h-full', !noPadding && 'px-3 pb-3', className)}>
-        <div className={cn('flex h-full items-center justify-center bg-card', !noPadding && 'rounded-2xl border border-border')}>
-          <p className="text-sm text-muted-foreground">
-            Build the project to view code
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className={cn('h-full', !noPadding && 'px-3 pb-3', className)}>
-        <div className={cn('flex h-full items-center justify-center bg-card', !noPadding && 'rounded-2xl border border-border')}>
-          <StatusCard label="Loading files…" />
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className={cn('h-full', !noPadding && 'px-3 pb-3', className)}>
-        <div className={cn('flex h-full items-center justify-center', !noPadding ? 'rounded-2xl border border-destructive/50' : '', 'bg-destructive/5')}>
-          <p className="text-sm text-destructive">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className={cn('flex h-full flex-col', !noPadding && 'px-3 pb-3', className)}>
       <div className={cn('flex h-full flex-col overflow-hidden bg-card', !noPadding && 'rounded-2xl border border-border')}>
@@ -180,6 +133,9 @@ export function CodePanel({ projectId, sandboxId, onLineSelection, className, no
             <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />
               Read only
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+              Demo Mode
             </span>
           </div>
           {openFiles.length > 0 && (
@@ -211,7 +167,7 @@ export function CodePanel({ projectId, sandboxId, onLineSelection, className, no
           {/* File tree sidebar */}
           <div className="w-56 shrink-0 border-r border-border">
             <FileTree
-              tree={tree}
+              tree={DEMO_FILE_TREE}
               selectedPath={selectedPath}
               onSelectFile={handleSelectFile}
               className="h-full"

@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getModelForTask, getModelId } from '@/lib/ai'
 import * as daytona from '@/lib/daytona/client'
 import { acquireSandbox, isSandboxPreWarmed } from '@/lib/daytona/pool'
 import { createSandboxTools } from '@/lib/pluto/tools'
@@ -332,11 +332,13 @@ Use the available tools to inspect files and make changes as needed.
 `
     }
 
+    const model = getModelForTask('code_generation')
     console.log(`[Build] System prompt size: ${systemPrompt.length} chars (${isInitialBuild ? 'initial' : 'continuation'})`)
+    console.log(`[Build] Using model: ${getModelId('code_generation')}`)
 
     // Stream the agent execution using AI SDK directly
     const result = streamText({
-      model: anthropic('claude-sonnet-4-6'),
+      model,
       system: systemPrompt,
       messages: modelMessages,
       tools,

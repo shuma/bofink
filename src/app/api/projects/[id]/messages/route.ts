@@ -14,61 +14,174 @@ function extractBuildLogs(
     if (typeof part !== 'object' || part === null) continue
 
     const p = part as Record<string, unknown>
+    const partType = p.type as string | undefined
 
-    // Extract from tool-result parts (command outputs)
-    if (p.type === 'tool-result' && p.toolName) {
-      const toolName = p.toolName as string
-      const result = p.result as Record<string, unknown> | undefined
+    if (!partType) continue
 
-      if (toolName === 'runCommand' && result) {
+    // Handle tool parts - multiple possible formats from AI SDK:
+    // 1. { type: 'tool-result', toolName: 'xxx', result: {...} }
+    // 2. { type: 'tool-result', toolName: 'xxx', output: {...} }
+    // 3. { type: 'tool-invocation', toolName: 'xxx', state: 'result', result: {...} }
+    // 4. { type: 'tool-xxx', result/output/... }
+    let toolName: string | undefined
+    let result: Record<string, unknown> | undefined
+
+    if (partType === 'tool-result') {
+      // Standard result format
+      toolName = p.toolName as string | undefined
+      result = (p.result as Record<string, unknown>) || (p.output as Record<string, unknown>)
+    } else if (partType === 'tool-invocation' && p.state === 'result') {
+      // Tool invocation with completed result
+      toolName = p.toolName as string | undefined
+      result = (p.result as Record<string, unknown>) || (p.output as Record<string, unknown>)
+    } else if (partType.startsWith('tool-') && partType !== 'tool-invocation' && partType !== 'tool-call') {
+      // Embedded tool name format: type: 'tool-writeFile'
+      toolName = partType.replace('tool-', '')
+      // Result could be in result, output, or directly in the part
+      result = (p.result as Record<string, unknown>) ||
+               (p.output as Record<string, unknown>) ||
+               p as Record<string, unknown>
+    }
+
+    // Also check for toolName at root level with result/output
+    if (!toolName && p.toolName && typeof p.toolName === 'string') {
+      toolName = p.toolName as string
+      result = (p.result as Record<string, unknown>) ||
+               (p.output as Record<string, unknown>) ||
+               p as Record<string, unknown>
+    }
+
+    if (toolName && result) {
+      if (toolName === 'runCommand') {
         // Log the command execution
-        const command = (result.command as string) || 'unknown command'
+        const command = (result.command as string) || ''
         const output = (result.output as string) || ''
         const exitCode = result.exitCode as number
+        const success = result.success as boolean
 
-        logs.push({
-          project_id: projectId,
-          message_id: messageDbId,
-          type: 'command',
-          message: command,
-          step: null,
-        })
+        if (command) {
+          logs.push({
+            project_id: projectId,
+            message_id: messageDbId,
+            type: 'command',
+            message: `$ ${command}`,
+            step: null,
+          })
+        }
 
         if (output) {
           logs.push({
             project_id: projectId,
             message_id: messageDbId,
-            type: exitCode === 0 ? 'output' : 'error',
+            type: success ? 'output' : 'error',
             message: output.slice(0, 5000), // Limit output size
             step: null,
           })
         }
-      } else if (toolName === 'writeFile' && result) {
-        const path = (result.path as string) || 'unknown file'
+
+        // Handle success message for completed commands
+        if (success && exitCode === 0 && !output) {
+          logs.push({
+            project_id: projectId,
+            message_id: messageDbId,
+            type: 'success',
+            message: `Command completed successfully`,
+            step: null,
+          })
+        }
+      } else if (toolName === 'writeFile') {
+        const path = (result.path as string) || (result.message as string)?.match(/File written: (.+)/)?.[1] || 'unknown file'
         logs.push({
           project_id: projectId,
           message_id: messageDbId,
           type: 'info',
-          message: `Created/updated file: ${path}`,
+          message: `Created file: ${path}`,
           step: null,
         })
-      } else if (toolName === 'readFile' && result) {
+      } else if (toolName === 'applyEdit') {
+        const path = (result.path as string) || 'unknown file'
+        const method = (result.method as string) || 'edit'
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Edited file: ${path} (${method})`,
+          step: null,
+        })
+      } else if (toolName === 'editFile') {
         const path = (result.path as string) || 'unknown file'
         logs.push({
           project_id: projectId,
           message_id: messageDbId,
           type: 'info',
-          message: `Read file: ${path}`,
+          message: `Edited file: ${path}`,
+          step: null,
+        })
+      } else if (toolName === 'readFile') {
+        const path = (result.path as string) || 'unknown file'
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Reading file: ${path}`,
+          step: null,
+        })
+      } else if (toolName === 'installDependencies') {
+        const output = (result.output as string) || ''
+        const success = result.success as boolean
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: success ? 'success' : 'error',
+          message: output ? output.slice(0, 2000) : (success ? 'Dependencies installed' : 'Install failed'),
+          step: null,
+        })
+      } else if (toolName === 'startProcess') {
+        const sessionId = (result.sessionId as string) || ''
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Started process: ${sessionId || 'dev server'}`,
+          step: null,
+        })
+      } else if (toolName === 'warpGrep') {
+        const summary = (result.summary as string) || ''
+        const method = (result.method as string) || ''
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Code search: ${summary || 'searching...'} (${method})`,
+          step: null,
+        })
+      } else if (toolName === 'grep') {
+        const totalMatches = (result.totalMatches as number) || 0
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Found ${totalMatches} matches`,
+          step: null,
+        })
+      } else if (toolName === 'createCheckpoint') {
+        const checkpoint = (result.checkpoint as string) || (result.label as string) || ''
+        logs.push({
+          project_id: projectId,
+          message_id: messageDbId,
+          type: 'info',
+          message: `Checkpoint created: ${checkpoint}`,
           step: null,
         })
       }
     }
 
     // Extract from text parts that look like status updates
-    if (p.type === 'text' && typeof p.text === 'string') {
+    if (partType === 'text' && typeof p.text === 'string') {
       const text = p.text as string
       // Look for step indicators in assistant messages
-      if (text.includes('Step') || text.includes('Creating') || text.includes('Installing')) {
+      if (text.includes('Step') || text.includes('Creating') || text.includes('Installing') ||
+          text.includes('Building') || text.includes('Starting') || text.includes('Completed')) {
         logs.push({
           project_id: projectId,
           message_id: messageDbId,
@@ -197,10 +310,36 @@ export async function POST(
 
       for (const savedMsg of savedMessages) {
         if (savedMsg.role === 'assistant' && Array.isArray(savedMsg.parts)) {
+          console.log(`[Messages] Extracting logs from message ${savedMsg.id}, parts: ${savedMsg.parts.length}`)
+          // Log tool-related parts with full detail for debugging
+          let toolPartCount = 0
+          savedMsg.parts.forEach((p: unknown, i: number) => {
+            const part = p as Record<string, unknown>
+            const partType = part.type as string | undefined
+            // Only log tool-related parts in detail
+            if (partType && (partType.includes('tool') || part.toolName)) {
+              toolPartCount++
+              console.log(`[Messages] Tool part ${i}:`, JSON.stringify({
+                type: part.type,
+                toolName: part.toolName,
+                state: part.state,
+                hasResult: 'result' in part,
+                hasOutput: 'output' in part,
+                keys: Object.keys(part),
+              }))
+            }
+          })
+          console.log(`[Messages] Found ${toolPartCount} tool parts`)
           const logs = extractBuildLogs(savedMsg.parts, projectId, savedMsg.id)
+          console.log(`[Messages] Extracted ${logs.length} logs from message ${savedMsg.id}`)
+          if (logs.length > 0) {
+            console.log(`[Messages] Sample logs:`, logs.slice(0, 3).map(l => l.message))
+          }
           allLogs.push(...logs)
         }
       }
+
+      console.log(`[Messages] Total logs to save: ${allLogs.length}`)
 
       if (allLogs.length > 0) {
         const { error: logsError } = await supabase
@@ -210,6 +349,8 @@ export async function POST(
         if (logsError) {
           // Log but don't fail - build logs are secondary
           console.error('Error saving build logs:', logsError)
+        } else {
+          console.log(`[Messages] Saved ${allLogs.length} build logs`)
         }
       }
     }

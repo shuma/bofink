@@ -1,38 +1,62 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { Check, AlertCircle, Terminal, Info, Code } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { BuildLogEntry } from '@/types/pluto'
 
 interface BuildLogProps {
   logs: BuildLogEntry[]
   className?: string
+  noPadding?: boolean
 }
 
-function LogIcon({ type }: { type: BuildLogEntry['type'] }) {
+// Terminal-style prefix symbols
+function LogPrefix({ type }: { type: BuildLogEntry['type'] }) {
   switch (type) {
     case 'success':
-      return <Check className="h-4 w-4 text-green-500" />
+      return <span className="text-emerald-600 select-none">✓</span>
     case 'error':
-      return <AlertCircle className="h-4 w-4 text-red-500" />
+      return <span className="text-red-500 select-none">✗</span>
     case 'command':
-      return <Terminal className="h-4 w-4 text-blue-500" />
+      return <span className="text-sky-600 select-none">&gt;_</span>
     case 'output':
-      return <Code className="h-4 w-4 text-muted-foreground" />
+      return <span className="text-muted-foreground/60 select-none">&lt;&gt;</span>
     case 'info':
     default:
-      return <Info className="h-4 w-4 text-muted-foreground" />
+      return <span className="text-muted-foreground/60 select-none">◦</span>
   }
 }
 
-export function BuildLog({ logs, className }: BuildLogProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+}
 
-  // Auto-scroll to bottom on new logs
+export function BuildLog({ logs, className, noPadding = false }: BuildLogProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [seenCount, setSeenCount] = useState(0)
+
+  // Track which logs are "new" for animation
+  useEffect(() => {
+    // Mark current logs as seen after animation duration
+    const timer = setTimeout(() => {
+      setSeenCount(logs.length)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [logs.length])
+
+  // Smooth auto-scroll to bottom on new logs
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: 'smooth',
+      })
     }
   }, [logs])
 
@@ -40,13 +64,14 @@ export function BuildLog({ logs, className }: BuildLogProps) {
     return (
       <div
         className={cn(
-          'flex items-center justify-center p-8',
-          'bg-muted/30 rounded-lg border border-dashed border-border',
+          'flex items-center justify-center',
+          !noPadding && 'rounded-2xl border border-dashed border-border',
+          'bg-muted/20',
           className
         )}
       >
-        <p className="text-sm text-muted-foreground">
-          Build logs will appear here...
+        <p className="text-sm text-muted-foreground/70">
+          Build logs will appear here
         </p>
       </div>
     )
@@ -56,46 +81,65 @@ export function BuildLog({ logs, className }: BuildLogProps) {
     <div
       ref={containerRef}
       className={cn(
-        'rounded-lg border border-border bg-card overflow-auto',
-        'font-mono text-sm',
+        'bg-card overflow-auto',
+        !noPadding && 'rounded-2xl border border-border',
         className
       )}
     >
-      <div className="p-4 space-y-2">
-        {logs.map((log, index) => (
-          <div
-            key={`${log.id}-${index}`}
-            className={cn(
-              'flex items-start gap-3 p-2 rounded',
-              log.type === 'error' && 'bg-red-500/10',
-              log.type === 'success' && 'bg-green-500/10',
-              log.type === 'command' && 'bg-blue-500/10'
-            )}
-          >
-            <LogIcon type={log.type} />
-            <div className="flex-1 min-w-0">
-              {log.step && (
-                <span className="text-xs text-muted-foreground mr-2">
-                  [{log.step}]
-                </span>
-              )}
-              <span
+      <div className="p-3">
+        <table className="w-full font-mono text-[13px] leading-relaxed border-separate border-spacing-0">
+          <tbody>
+            {logs.map((log, index) => {
+              const isNew = index >= seenCount
+              return (
+              <tr
+                key={`${log.id}-${index}`}
                 className={cn(
-                  'break-words',
-                  log.type === 'error' && 'text-red-500',
-                  log.type === 'success' && 'text-green-500',
-                  log.type === 'command' && 'text-blue-500',
-                  log.type === 'output' && 'text-muted-foreground'
+                  'group',
+                  log.type === 'command' && 'bg-sky-500/[0.06]',
+                  log.type === 'success' && 'bg-emerald-500/[0.06]',
+                  log.type === 'error' && 'bg-red-500/[0.06]',
+                  isNew && 'animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-out'
                 )}
               >
-                {log.message}
-              </span>
-            </div>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {new Date(log.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-        ))}
+                {/* Prefix */}
+                <td className="w-6 py-1.5 pl-2 pr-1 align-top text-center">
+                  <LogPrefix type={log.type} />
+                </td>
+
+                {/* Content */}
+                <td className="py-1.5 pr-3 align-top">
+                  <div className="flex flex-wrap items-baseline gap-x-2">
+                    {log.step && (
+                      <span className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">
+                        [{log.step}]
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        'break-words',
+                        log.type === 'error' && 'text-red-600',
+                        log.type === 'success' && 'text-emerald-700',
+                        log.type === 'command' && 'text-sky-700',
+                        log.type === 'output' && 'text-muted-foreground/80',
+                        log.type === 'info' && 'text-foreground/90'
+                      )}
+                    >
+                      {log.message}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Timestamp */}
+                <td className="w-20 py-1.5 pr-2 align-top text-right">
+                  <span className="text-[11px] tabular-nums text-muted-foreground/50" suppressHydrationWarning>
+                    {formatTime(log.timestamp)}
+                  </span>
+                </td>
+              </tr>
+            )})}
+          </tbody>
+        </table>
       </div>
     </div>
   )

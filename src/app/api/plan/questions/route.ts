@@ -1,7 +1,7 @@
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
 import { clarifyingQuestionsResponseSchema } from '@/lib/pluto/schemas'
 import { clarifyingQuestionsPrompt } from '@/lib/pluto/prompts'
+import { getModelForTask, getModelId } from '@/lib/ai'
 
 export const maxDuration = 30
 
@@ -16,8 +16,11 @@ export async function POST(req: Request) {
       )
     }
 
+    const model = getModelForTask('clarification')
+    console.log(`[Questions] Using model: ${getModelId('clarification')}`)
+
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model,
       schema: clarifyingQuestionsResponseSchema,
       prompt: `${clarifyingQuestionsPrompt}
 

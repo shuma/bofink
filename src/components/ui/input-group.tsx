@@ -40,9 +40,9 @@ function InputGroup({ className, variant = "default", ...props }: InputGroupProp
         variant === "chatbar" && [
           "rounded-2xl",
           "bg-[image:var(--gradient-input-fill)]",
-          "shadow-[var(--shadow-input-base)]",
-          "hover:shadow-[var(--shadow-input-hover)]",
-          "has-[[data-slot=input-group-control]:focus-visible]:shadow-[var(--shadow-input-focus),var(--glow-input-focus)]",
+          "shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.28),0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a,0px_3px_3px_-1.5px_#0000000a,0px_6px_6px_-3px_#0000000a,0px_12px_12px_-6px_#0000000a,0px_24px_24px_-12px_#0000000a]",
+          "hover:shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.35),0px_1px_1px_0px_#0000000f,0px_1px_1px_-.5px_#0000000f,0px_3px_3px_-1.5px_#0000000f,0px_6px_6px_-3px_#0000000f,0px_12px_12px_-6px_#0000000f,0px_24px_24px_-12px_#0000000f]",
+          "has-[[data-slot=input-group-control]:focus-visible]:shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.4),0px_1px_1px_0px_#00000014,0px_1px_1px_-.5px_#00000014,0px_3px_3px_-1.5px_#00000014,0px_6px_6px_-3px_#00000014,0px_12px_12px_-6px_#00000014,0px_24px_24px_-12px_#00000014]",
         ],
         className
       )}

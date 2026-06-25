@@ -22,14 +22,11 @@ interface UsePersistedChatOptions {
 
 /**
  * Check if a message has incomplete tool calls that would cause SDK errors.
- * This is very aggressive - we filter out any message with tool calls
- * that don't have completed results or are in incomplete states.
+ * We only filter out messages with actively streaming/pending tool calls.
+ * Completed tool-result parts are always valid.
  */
 function hasIncompleteToolCalls(parts: unknown[]): boolean {
   if (!Array.isArray(parts)) return false
-
-  const toolCallIds = new Set<string>()
-  const toolResultIds = new Set<string>()
 
   for (const part of parts) {
     if (typeof part !== 'object' || part === null) continue
@@ -40,42 +37,23 @@ function hasIncompleteToolCalls(parts: unknown[]): boolean {
     if ('type' in p && typeof p.type === 'string') {
       const type = p.type as string
 
-      // Tool invocation or tool call types
-      if (type === 'tool-invocation' || type === 'tool-call' || type.includes('tool')) {
+      // tool-result type is always complete - skip checking it
+      if (type === 'tool-result') {
+        continue
+      }
+
+      // Tool invocation states that indicate incomplete calls
+      if (type === 'tool-invocation' || type === 'tool-call') {
         const state = p.state as string | undefined
 
-        // Any state that isn't 'result' is incomplete
-        // States: 'call', 'partial-call', 'input-available', 'result'
+        // Only filter if state explicitly indicates incomplete
+        // States: 'call', 'partial-call', 'input-available' are incomplete
+        // 'result' or undefined (for stored messages) are complete
         if (state && state !== 'result') {
           console.log(`[Chat] Incomplete tool state: ${state} for type ${type}`)
           return true
         }
-
-        // If no state field but has toolName without output, it's incomplete
-        if (!state && p.toolName && !('output' in p) && !('result' in p)) {
-          console.log(`[Chat] Tool call without result: ${p.toolName}`)
-          return true
-        }
       }
-    }
-
-    // Collect tool call IDs for cross-reference check
-    if (p.toolCallId && typeof p.toolCallId === 'string') {
-      // Check if this is a tool call (has toolName) or a tool result (has output or result)
-      if (p.toolName && !('output' in p) && !('result' in p)) {
-        toolCallIds.add(p.toolCallId)
-      }
-      if ('output' in p || 'result' in p) {
-        toolResultIds.add(p.toolCallId)
-      }
-    }
-  }
-
-  // Check if any tool calls don't have results
-  for (const callId of toolCallIds) {
-    if (!toolResultIds.has(callId)) {
-      console.log(`[Chat] Tool call ${callId} has no result`)
-      return true
     }
   }
 
@@ -102,50 +80,21 @@ function hasTrailingIncompleteToolCalls(messages: DBMessage[]): boolean {
 function cleanMessageParts(parts: unknown[]): unknown[] | null {
   if (!Array.isArray(parts)) return null
 
-  const toolCallIds = new Set<string>()
-  const toolResultIds = new Set<string>()
-
-  // First pass: collect all tool call and result IDs
-  for (const part of parts) {
-    if (typeof part !== 'object' || part === null) continue
-    const p = part as Record<string, unknown>
-
-    if (p.toolCallId && typeof p.toolCallId === 'string') {
-      if (p.toolName && !('output' in p) && !('result' in p)) {
-        toolCallIds.add(p.toolCallId)
-      }
-      if ('output' in p || 'result' in p) {
-        toolResultIds.add(p.toolCallId)
-      }
-    }
-  }
-
-  // Find incomplete tool call IDs
-  const incompleteIds = new Set<string>()
-  for (const callId of toolCallIds) {
-    if (!toolResultIds.has(callId)) {
-      incompleteIds.add(callId)
-    }
-  }
-
-  // Second pass: filter out incomplete tool parts
+  // Filter out only actively incomplete tool invocations
   const cleanedParts = parts.filter((part) => {
     if (typeof part !== 'object' || part === null) return true
 
     const p = part as Record<string, unknown>
 
-    // Check if this part is related to an incomplete tool call
-    if (p.toolCallId && typeof p.toolCallId === 'string') {
-      if (incompleteIds.has(p.toolCallId)) {
-        console.log(`[Chat] Removing incomplete tool part: ${p.toolCallId}`)
-        return false
-      }
-    }
-
     // Check for tool invocation in incomplete state
     if ('type' in p && typeof p.type === 'string') {
       const type = p.type as string
-      if (type === 'tool-invocation' || type === 'tool-call' || type.includes('tool')) {
+
+      // tool-result is always valid
+      if (type === 'tool-result') return true
+
+      // Only filter out tool-invocation or tool-call with incomplete state
+      if (type === 'tool-invocation' || type === 'tool-call') {
         const state = p.state as string | undefined
         if (state && state !== 'result') {
           console.log(`[Chat] Removing tool part with incomplete state: ${state}`)
@@ -165,8 +114,11 @@ function cleanMessageParts(parts: unknown[]): unknown[] | null {
     if (typeof part === 'string' && part.trim()) return true
     if (typeof part === 'object' && part !== null) {
       const p = part as Record<string, unknown>
+      // Text parts
       if ('text' in p && typeof p.text === 'string' && p.text.trim()) return true
       if ('type' in p && p.type === 'text') return true
+      // Tool result parts are meaningful content
+      if ('type' in p && p.type === 'tool-result') return true
     }
     return false
   })
