@@ -201,7 +201,7 @@ export default function DemoPage() {
                       index.tsx
                     </span>
                   </div>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                     {content}
                   </p>
                   {project.plan?.name && (
@@ -307,19 +307,19 @@ export default function DemoPage() {
         {/* Right side - Preview/Logs/Code */}
         <SplitPanelLayout.Right>
           {/* Menubar */}
-          <div className="flex items-center gap-2 px-3 py-1.5">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <div className="view-switcher-track inline-flex items-center rounded-full">
               <button
                 onClick={() => setActiveTab('preview')}
                 className={cn(
-                  'flex items-center justify-center rounded-full text-xs font-medium transition-all',
+                  'flex items-center justify-center rounded-full text-sm font-medium transition-all',
                   activeTab === 'preview'
-                    ? 'view-switcher-pill gap-1.5 h-6 px-2'
-                    : 'h-6 w-6 text-muted-foreground hover:text-foreground'
+                    ? 'view-switcher-pill gap-2 h-8 px-3'
+                    : 'h-8 w-8 text-muted-foreground hover:text-foreground'
                 )}
                 aria-label="Preview"
               >
-                <Globe className="h-3.5 w-3.5 shrink-0" />
+                <Globe className="h-4 w-4 shrink-0" />
                 {activeTab === 'preview' && <span>Preview</span>}
               </button>
               {activeTab !== 'preview' && activeTab !== 'logs' && (
@@ -328,14 +328,14 @@ export default function DemoPage() {
               <button
                 onClick={() => setActiveTab('logs')}
                 className={cn(
-                  'flex items-center justify-center rounded-full text-xs font-medium transition-all',
+                  'flex items-center justify-center rounded-full text-sm font-medium transition-all',
                   activeTab === 'logs'
-                    ? 'view-switcher-pill gap-1.5 h-6 px-2'
-                    : 'h-6 w-6 text-muted-foreground hover:text-foreground'
+                    ? 'view-switcher-pill gap-2 h-8 px-3'
+                    : 'h-8 w-8 text-muted-foreground hover:text-foreground'
                 )}
                 aria-label="Build Logs"
               >
-                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <FileText className="h-4 w-4 shrink-0" />
                 {activeTab === 'logs' && <span>Build Logs</span>}
               </button>
               {activeTab !== 'logs' && activeTab !== 'code' && (
@@ -344,47 +344,47 @@ export default function DemoPage() {
               <button
                 onClick={() => setActiveTab('code')}
                 className={cn(
-                  'flex items-center justify-center rounded-full text-xs font-medium transition-all',
+                  'flex items-center justify-center rounded-full text-sm font-medium transition-all',
                   activeTab === 'code'
-                    ? 'view-switcher-pill gap-1.5 h-6 px-2'
-                    : 'h-6 w-6 text-muted-foreground hover:text-foreground'
+                    ? 'view-switcher-pill gap-2 h-8 px-3'
+                    : 'h-8 w-8 text-muted-foreground hover:text-foreground'
                 )}
                 aria-label="Code"
               >
-                <Code className="h-3.5 w-3.5 shrink-0" />
+                <Code className="h-4 w-4 shrink-0" />
                 {activeTab === 'code' && <span>Code</span>}
               </button>
               {activeTab !== 'code' && (
                 <div className="view-switcher-divider" />
               )}
               <button
-                className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="Layers"
               >
-                <Layers className="h-3.5 w-3.5" />
+                <Layers className="h-4 w-4" />
               </button>
             </div>
 
             {/* URL bar - only show when preview tab is active */}
             {activeTab === 'preview' && (
-              <div className="flex min-w-0 flex-1 items-center gap-1">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] text-muted-foreground">
-                  <AppWindow className="h-3 w-3 shrink-0" />
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-full bg-muted/50 px-3 text-xs text-muted-foreground">
+                  <AppWindow className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">{previewUrl}</span>
                 </div>
                 <button
                   type="button"
                   aria-label="Reload preview"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  <RefreshCw className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   aria-label="Open in new tab"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-4 w-4" />
                 </button>
               </div>
             )}
