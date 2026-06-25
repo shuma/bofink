@@ -50,12 +50,52 @@ async function withMorphFallback<T>(
   }
 }
 
+// Create WarpGrep tool using Morph SDK's createWarpGrepTool for Vercel AI SDK
+async function createWarpGrepToolForSandbox(sandboxId: string, appDir: string) {
+  if (!process.env.MORPH_API_KEY) {
+    console.log('[WarpGrep] No MORPH_API_KEY, skipping')
+    return null
+  }
+
+  try {
+    console.log('[WarpGrep] Creating tool with remoteCommands...')
+    const { createWarpGrepTool } = await import('@morphllm/morphsdk/tools/warp-grep/vercel')
+
+    return createWarpGrepTool({
+      repoRoot: appDir,
+      remoteCommands: {
+        grep: async (pattern, path, glob) => {
+          const globArg = glob ? ` --glob '${glob}'` : ''
+          const cmd = `rg --no-heading --line-number -C 1 '${pattern}' '${path}'${globArg}`
+          const res = await daytona.runCommand(sandboxId, cmd, appDir)
+          return res.output || ''
+        },
+        read: async (filepath, start, end) => {
+          const cmd = `sed -n '${start},${end}p' '${filepath}'`
+          const res = await daytona.runCommand(sandboxId, cmd, appDir)
+          return res.output || ''
+        },
+        listDir: async (dirpath, maxDepth) => {
+          const cmd = `find '${dirpath}' -maxdepth ${maxDepth} -not -path '*/node_modules/*' -not -path '*/.git/*' -type f`
+          const res = await daytona.runCommand(sandboxId, cmd, appDir)
+          return res.output || ''
+        },
+      },
+    })
+  } catch (error) {
+    console.warn('[WarpGrep] Failed to create tool:', error)
+    return null
+  }
+}
+
 // Create sandbox tools for a specific sandbox
-export function createSandboxTools(
+export async function createSandboxTools(
   sandboxId: string,
   appDir: string = '/home/daytona/app',
   projectId?: string
 ) {
+  // Create WarpGrep tool (returns Morph tool or null)
+  const warpGrepTool = await createWarpGrepToolForSandbox(sandboxId, appDir)
   // ============================================================================
   // File Reading (Enhanced with line ranges)
   // ============================================================================
@@ -382,134 +422,40 @@ function handleAuth() {
     },
   })
 
-  const warpGrep = tool({
-    description: 'Semantic search across the codebase using natural language. Finds relevant files based on meaning, not just text patterns.',
+  // Fallback grep tool (used when Morph WarpGrep is not available)
+  const fallbackGrep = tool({
+    description: 'Search across the codebase using keywords (fallback)',
     inputSchema: z.object({
-      query: z.string().describe('Natural language search query (e.g., "where is authentication handled")'),
+      query: z.string().describe('Search query'),
     }),
-    execute: async ({ query }): Promise<{
-      success: boolean
-      contexts?: Array<{ file: string; content: string }>
-      summary?: string
-      error?: string
-      method?: string
-    }> => {
-      console.log(`[warpGrep] Execute called with query: "${query}"`)
-      console.log(`[warpGrep] MORPH_API_KEY set: ${!!process.env.MORPH_API_KEY}`)
+    execute: async ({ query }) => {
+      const keywords = query
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 3 && !['where', 'what', 'how', 'the', 'is', 'are', 'does'].includes(w))
+      const pattern = keywords.slice(0, 3).join('|')
 
-      const fallbackGrep = async (): Promise<{
-        success: boolean
-        contexts?: Array<{ file: string; content: string }>
-        summary?: string
-        error?: string
-        method?: string
-      }> => {
-        // Fallback to regular grep with simple pattern extraction
-        try {
-          // Extract keywords from query for basic grep
-          const keywords = query
-            .toLowerCase()
-            .split(/\s+/)
-            .filter((w) => w.length > 3 && !['where', 'what', 'how', 'the', 'is', 'are', 'does'].includes(w))
-          const pattern = keywords.slice(0, 3).join('|')
-
-          if (!pattern) {
-            return { success: false, error: 'Could not extract search terms from query', method: 'fallback' }
-          }
-
-          const result = await ops.grep(sandboxId, {
-            pattern,
-            path: appDir,
-            ignoreCase: true,
-            maxMatches: 20,
-          })
-
-          return {
-            success: true,
-            contexts: result.matches.map((m) => ({
-              file: m.file,
-              content: `Line ${m.line}: ${m.content}`,
-            })),
-            summary: `Found ${result.totalMatches} matches using keyword search`,
-            method: 'grep_fallback',
-          }
-        } catch (error) {
-          return {
-            success: false,
-            error: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            method: 'grep_fallback',
-          }
-        }
+      if (!pattern) {
+        return { success: false, error: 'Could not extract search terms', method: 'grep_fallback' }
       }
 
-      return withMorphFallback(
-        async (): Promise<{
-          success: boolean
-          contexts?: Array<{ file: string; content: string }>
-          summary?: string
-          error?: string
-          method?: string
-        }> => {
-          const morph = await getMorphClient()
-          if (!morph) throw new Error('Morph not configured')
+      const result = await ops.grep(sandboxId, {
+        pattern,
+        path: appDir,
+        ignoreCase: true,
+        maxMatches: 20,
+      })
 
-          // Use Morph WarpGrep for semantic search with remoteCommands for Daytona sandbox
-          const result = await morph.warpGrep.execute({
-            searchTerm: query,
-            repoRoot: appDir,
-            // remoteCommands allows WarpGrep to execute file operations in the Daytona sandbox
-            remoteCommands: {
-              grep: async (pattern, path, glob) => {
-                // Run ripgrep in sandbox, return file paths
-                const globArg = glob ? `--glob '${glob}'` : ''
-                const res = await daytona.runCommand(
-                  sandboxId,
-                  `rg -l ${globArg} '${pattern}' '${path}' 2>/dev/null || true`,
-                  appDir
-                )
-                return res.output
-              },
-              read: async (filepath, start, end) => {
-                // Read specific line range from file
-                const res = await daytona.runCommand(
-                  sandboxId,
-                  `sed -n '${start},${end}p' '${filepath}'`,
-                  appDir
-                )
-                return res.output
-              },
-              listDir: async (dirpath, maxDepth) => {
-                // List directory contents up to max depth
-                const res = await daytona.runCommand(
-                  sandboxId,
-                  `find '${dirpath}' -maxdepth ${maxDepth} -type f 2>/dev/null || true`,
-                  appDir
-                )
-                return res.output
-              },
-            },
-          })
-
-          if (!result.success) {
-            return {
-              success: false,
-              error: result.error || 'WarpGrep search failed',
-              method: 'warpGrep',
-            }
-          }
-
-          return {
-            success: true,
-            contexts: result.contexts,
-            summary: result.summary,
-            method: 'warpGrep',
-          }
-        },
-        fallbackGrep,
-        'warpGrep'
-      )
+      return {
+        success: true,
+        contexts: result.matches.map((m) => ({ file: m.file, content: `Line ${m.line}: ${m.content}` })),
+        method: 'grep_fallback',
+      }
     },
   })
+
+  // Use Morph WarpGrep if available, otherwise fallback
+  const warpGrep = warpGrepTool ?? fallbackGrep
 
   // ============================================================================
   // File Tree Navigation
@@ -997,12 +943,12 @@ export interface RawToolDefinition {
  * Create raw sandbox tools (not wrapped with AI SDK tool())
  * Used for Letta client-side tools integration
  */
-export function createSandboxToolsRaw(
+export async function createSandboxToolsRaw(
   sandboxId: string,
   appDir: string = '/home/daytona/app'
-): Record<string, RawToolDefinition> {
+): Promise<Record<string, RawToolDefinition>> {
   // Get the AI SDK tools
-  const aiTools = createSandboxTools(sandboxId, appDir)
+  const aiTools = await createSandboxTools(sandboxId, appDir)
 
   // Extract raw definitions from each tool
   const rawTools: Record<string, RawToolDefinition> = {}

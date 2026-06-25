@@ -161,7 +161,7 @@ export async function POST(
     await sandboxState.recordActivity(sandboxId).catch(() => {})
 
     // Create tools for this sandbox (with projectId for memory operations)
-    const tools = createSandboxTools(sandboxId, appDir, projectId)
+    const tools = await createSandboxTools(sandboxId, appDir, projectId)
 
     // Load project memory for context
     let memoryContext = ''

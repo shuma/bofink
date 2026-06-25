@@ -233,7 +233,7 @@ export async function POST(
     const appDir = `${workDir}/app`
 
     // Create tools for this sandbox (with projectId for memory operations)
-    const tools = createSandboxTools(sandboxId, appDir, projectId)
+    const tools = await createSandboxTools(sandboxId, appDir, projectId)
 
     // Initialize project memory for new builds
     const isInitialBuild = !project.daytona_sandbox_id || messages.length <= 1
