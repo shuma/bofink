@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { ProjectCard } from '@/components/pluto/project-card'
+import { PlutoOrb } from '@/components/pluto/pluto-orb'
 import { createClient } from '@/lib/supabase/client'
 import type { Project } from '@/types/pluto'
 
@@ -68,7 +69,7 @@ export default function DashboardPage() {
             onClick={() => router.push('/')}
             className="flex items-center gap-2.5 hover:opacity-70 transition-opacity"
           >
-            <span className="h-6 w-6 rounded-full bg-foreground" />
+            <PlutoOrb size={24} />
             <span className="font-heading text-base font-semibold">Pluto</span>
           </button>
           <div className="flex items-center gap-4">
@@ -90,15 +91,15 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 lg:px-8 py-10">
-        <div className="max-w-6xl mx-auto">
+      <main className="py-10">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
           <h1 className="text-xl font-heading font-semibold text-foreground mb-8">
             My Projects
           </h1>
 
           {isLoading && (
             <div className="flex items-center justify-center py-24">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <PlutoOrb size={32} speed={20} />
             </div>
           )}
 
@@ -116,7 +117,9 @@ export default function DashboardPage() {
 
           {!isLoading && !error && projects.length === 0 && (
             <div className="text-center py-24">
-              <div className="h-10 w-10 rounded-full bg-foreground/10 mx-auto mb-4" />
+              <div className="mx-auto mb-4 w-fit">
+                <PlutoOrb size={40} />
+              </div>
               <h2 className="text-base font-medium text-foreground mb-1">No projects yet</h2>
               <p className="text-sm text-muted-foreground mb-6">
                 Start building your first app

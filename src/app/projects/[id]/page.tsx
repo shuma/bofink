@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { BuildWorkspace } from '@/components/pluto/build-workspace'
+import { PlutoOrb } from '@/components/pluto/pluto-orb'
 import { createClient } from '@/lib/supabase/client'
 import { useProjectRealtime } from '@/hooks/use-realtime'
 import { usePersistedChat } from '@/hooks/use-persisted-chat'
@@ -156,8 +157,8 @@ export default function ProjectPage({
     return (
       <div className="min-h-svh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">
+          <PlutoOrb size={48} speed={20} />
+          <p className="text-sm text-muted-foreground">
             {isLoading ? 'Loading project...' : 'Loading conversation history...'}
           </p>
         </div>

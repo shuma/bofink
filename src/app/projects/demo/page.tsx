@@ -17,6 +17,8 @@ import {
 import { DemoPreviewPanel } from '@/components/pluto/demo-preview-panel'
 import { DemoCodePanel } from '@/components/pluto/demo-code-panel'
 import { LogsPanel } from '@/components/pluto/logs-panel'
+import { PlutoOrb } from '@/components/pluto/pluto-orb'
+import { Switch } from '@/components/ui/switch'
 import {
   PromptInput,
   PromptInputTextarea,
@@ -53,6 +55,7 @@ export default function DemoPage() {
   const [activeTab, setActiveTab] = useState<'preview' | 'logs' | 'code'>('preview')
   const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
   const [isBuilding, setIsBuilding] = useState(false)
+  const [showLoading, setShowLoading] = useState(false)
 
   const project = DEMO_PROJECT
   const previewUrl = 'https://demo-todo-app.pluto.dev'
@@ -130,6 +133,26 @@ export default function DemoPage() {
     return textParts.map((p) => p.text).join('\n')
   }
 
+  // Show loading state when toggle is on
+  if (showLoading) {
+    return (
+      <div className="min-h-svh bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <PlutoOrb size={48} speed={20} />
+          <p className="text-sm text-muted-foreground">Loading project...</p>
+        </div>
+        {/* Floating switch to toggle back */}
+        <div className="fixed top-4 right-4 flex items-center gap-2 rounded-lg bg-card border border-border px-3 py-2 shadow-sm">
+          <span className="text-xs text-muted-foreground">Loading</span>
+          <Switch
+            checked={showLoading}
+            onCheckedChange={setShowLoading}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-svh bg-background">
       <SplitPanelLayout>
@@ -143,9 +166,7 @@ export default function DemoPage() {
                 className="group flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted"
                 aria-label="Back to projects"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary font-heading text-xs font-semibold text-primary-foreground">
-                  {project.name.charAt(0).toUpperCase()}
-                </span>
+                <PlutoOrb size={28} />
                 <span className="truncate font-heading text-sm font-medium">
                   {project.name}
                 </span>
@@ -154,6 +175,13 @@ export default function DemoPage() {
               <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
                 Demo
               </span>
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Loading</span>
+                <Switch
+                  checked={showLoading}
+                  onCheckedChange={setShowLoading}
+                />
+              </div>
             </div>
           </div>
 

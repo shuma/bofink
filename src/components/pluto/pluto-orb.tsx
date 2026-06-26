@@ -4,9 +4,10 @@ import { GrainGradient } from '@paper-design/shaders-react'
 
 interface PlutoOrbProps {
   size?: number
+  speed?: number
 }
 
-export function PlutoOrb({ size = 32 }: PlutoOrbProps) {
+export function PlutoOrb({ size = 32, speed = 1.5 }: PlutoOrbProps) {
   return (
     <div
       className="rounded-full overflow-hidden"
@@ -21,7 +22,7 @@ export function PlutoOrb({ size = 32 }: PlutoOrbProps) {
         softness={0.9}
         intensity={0.3}
         noise={0.1}
-        speed={1.5}
+        speed={speed}
       />
     </div>
   )

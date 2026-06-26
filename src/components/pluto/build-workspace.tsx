@@ -18,6 +18,7 @@ import { LogsPanel } from './logs-panel'
 import { CodePanel } from './code-panel'
 import { AskUserModal } from './ask-user-modal'
 import { StatusCard } from './status-card'
+import { PlutoOrb } from './pluto-orb'
 import {
   PromptInput,
   PromptInputTextarea,
@@ -157,9 +158,7 @@ export function BuildWorkspace({
               className="group flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted"
               aria-label="Back to projects"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary font-heading text-xs font-semibold text-primary-foreground">
-                {project.name.charAt(0).toUpperCase()}
-              </span>
+              <PlutoOrb size={28} />
               <span className="truncate font-heading text-sm font-medium">
                 {project.name}
               </span>
