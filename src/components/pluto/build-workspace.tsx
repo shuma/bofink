@@ -12,7 +12,10 @@ import {
   RefreshCw,
   ExternalLink,
   AppWindow,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react'
+import type { PanelImperativeHandle } from 'react-resizable-panels'
 import { PreviewPanel } from './preview-panel'
 import { LogsPanel } from './logs-panel'
 import { CodePanel } from './code-panel'
@@ -75,6 +78,20 @@ export function BuildWorkspace({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
   const [previewKey, setPreviewKey] = useState(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const sidebarPanelRef = useRef<PanelImperativeHandle>(null)
+
+  // Keyboard shortcut for sidebar toggle (⌘B / Ctrl+B)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        setSidebarCollapsed((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   // Preview URL
   const { data: previewUrl } = usePreviewUrl(
@@ -149,7 +166,14 @@ export function BuildWorkspace({
   return (
     <SplitPanelLayout>
       {/* Left side - Chat */}
-      <SplitPanelLayout.Left>
+      <SplitPanelLayout.Left
+        defaultSize={30}
+        minSize={20}
+        maxSize={50}
+        collapsed={sidebarCollapsed}
+        onCollapse={setSidebarCollapsed}
+        panelRef={sidebarPanelRef}
+      >
         {/* Project Header */}
         <div className="shrink-0 px-3 py-2.5">
           <div className="flex items-center gap-3">
@@ -163,6 +187,13 @@ export function BuildWorkspace({
                 {project.name}
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="ml-auto flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+              title="Close sidebar (⌘B)"
+            >
+              <PanelLeftClose className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -315,10 +346,23 @@ export function BuildWorkspace({
         </div>
       </SplitPanelLayout.Left>
 
+      <SplitPanelLayout.ResizeHandle />
+
       {/* Right side - Preview/Logs/Code */}
       <SplitPanelLayout.Right>
         {/* Menubar */}
         <div className="flex items-center gap-3 px-4 py-2.5">
+          {/* Sidebar toggle - only show when collapsed */}
+          {sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+              title="Open sidebar (⌘B)"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
+          )}
+
           <div className="view-switcher-track inline-flex items-center rounded-full">
             <button
               onClick={() => setActiveTab('preview')}

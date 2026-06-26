@@ -274,3 +274,20 @@
   background: oklch(1 0 0 / 0.12);
 }
 
+/* Resizable panel styles */
+[data-panel-group-direction="horizontal"] > [data-panel] {
+  transition: flex-basis 200ms ease-out;
+}
+
+/* Resize handle hover effect */
+[data-resize-handle] {
+  transition: background-color 150ms ease;
+}
+[data-resize-handle]:hover,
+[data-resize-handle][data-resize-handle-active] {
+  background-color: var(--border);
+}
+[data-resize-handle][data-resize-handle-active] {
+  background-color: var(--primary);
+}
+

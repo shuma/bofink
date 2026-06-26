@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FileText,
@@ -13,7 +13,10 @@ import {
   RefreshCw,
   ExternalLink,
   AppWindow,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react'
+import type { PanelImperativeHandle } from 'react-resizable-panels'
 import { DemoPreviewPanel } from '@/components/pluto/demo-preview-panel'
 import { DemoCodePanel } from '@/components/pluto/demo-code-panel'
 import { LogsPanel } from '@/components/pluto/logs-panel'
@@ -56,6 +59,20 @@ export default function DemoPage() {
   const [lineSelection, setLineSelection] = useState<LineSelection | null>(null)
   const [isBuilding, setIsBuilding] = useState(false)
   const [showLoading, setShowLoading] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const sidebarPanelRef = useRef<PanelImperativeHandle>(null)
+
+  // Keyboard shortcut for sidebar toggle (⌘B / Ctrl+B)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        setSidebarCollapsed((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const project = DEMO_PROJECT
   const previewUrl = 'https://demo-todo-app.pluto.dev'
@@ -157,7 +174,14 @@ export default function DemoPage() {
     <div className="h-svh bg-background">
       <SplitPanelLayout>
         {/* Left side - Chat */}
-        <SplitPanelLayout.Left>
+        <SplitPanelLayout.Left
+          defaultSize={30}
+          minSize={20}
+          maxSize={50}
+          collapsed={sidebarCollapsed}
+          onCollapse={setSidebarCollapsed}
+          panelRef={sidebarPanelRef}
+        >
           {/* Project Header */}
           <div className="shrink-0 px-3 py-2.5">
             <div className="flex items-center gap-3">
@@ -175,12 +199,19 @@ export default function DemoPage() {
               <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
                 Demo
               </span>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">Loading</span>
                 <Switch
                   checked={showLoading}
                   onCheckedChange={setShowLoading}
                 />
+                <button
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+                  title="Close sidebar (⌘B)"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -332,10 +363,23 @@ export default function DemoPage() {
           </div>
         </SplitPanelLayout.Left>
 
+        <SplitPanelLayout.ResizeHandle />
+
         {/* Right side - Preview/Logs/Code */}
         <SplitPanelLayout.Right>
           {/* Menubar */}
           <div className="flex items-center gap-3 px-4 py-2.5">
+            {/* Sidebar toggle - only show when collapsed */}
+            {sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+                title="Open sidebar (⌘B)"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </button>
+            )}
+
             <div className="view-switcher-track inline-flex items-center rounded-full">
               <button
                 onClick={() => setActiveTab('preview')}
