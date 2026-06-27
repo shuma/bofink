@@ -62,9 +62,8 @@ function HomePageContent() {
         <div className="w-full max-w-xl space-y-10">
           {/* Header */}
           <div className="text-center space-y-3">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <PlutoOrb size={32} />
-              <span className="font-heading text-xl font-semibold">Pluto</span>
+            <div className="flex items-center justify-center mb-6">
+              <PlutoOrb size={36} />
             </div>
             <h1 className="font-heading text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
               What do you want to build?
