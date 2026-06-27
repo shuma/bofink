@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { PromptInput } from '@/components/pluto/prompt-input'
 import { AuthModal } from '@/components/pluto/auth-modal'
 import { PlutoOrb } from '@/components/pluto/pluto-orb'
+import { DiaGradient } from '@/components/pluto/dia-gradient'
 import { usePlutoStore } from '@/hooks/use-pluto-store'
 
 function HomePageContent() {
@@ -81,6 +82,11 @@ function HomePageContent() {
           />
         </div>
       </main>
+
+      {/* Dia Gradient - decorative footer glow */}
+      <div className="fixed inset-x-0 bottom-0 h-[20vh] pointer-events-none z-10">
+        <DiaGradient />
+      </div>
 
       {/* My Projects button */}
       {isAuthenticated && (
