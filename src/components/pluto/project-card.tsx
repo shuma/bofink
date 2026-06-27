@@ -19,13 +19,17 @@ interface ProjectCardProps {
 function getStatusStyles(status: Project['status']) {
   switch (status) {
     case 'ready':
-      return 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20'
+      // Dia blue
+      return 'bg-[#0358F7]/10 text-[#0358F7] ring-[#0358F7]/20'
     case 'building':
-      return 'bg-blue-500/10 text-blue-600 ring-blue-500/20'
+      // Dia magenta
+      return 'bg-[#FD02F5]/10 text-[#D001CC] ring-[#FD02F5]/20'
     case 'error':
-      return 'bg-red-500/10 text-red-600 ring-red-500/20'
+      // Dia red
+      return 'bg-[#FA3D1D]/10 text-[#FA3D1D] ring-[#FA3D1D]/20'
     case 'planning':
-      return 'bg-amber-500/10 text-amber-600 ring-amber-500/20'
+      // Dia yellow (darker text for readability)
+      return 'bg-[#FFD400]/15 text-[#B89700] ring-[#FFD400]/30'
     default:
       return 'bg-muted text-muted-foreground ring-border'
   }
