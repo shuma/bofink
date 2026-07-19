@@ -222,42 +222,38 @@ export function BuildWorkspace({
               return (
                 <div
                   key={`${message.id}-${index}`}
-                  className="inline-block max-w-full rounded-2xl rounded-br-sm border border-border/40 bg-white px-5 py-4 shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.28),0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a]"
+                  className="inline-block max-w-full rounded-2xl rounded-br-sm border border-[#00000029] bg-white px-5 py-4 shadow-[0_1px_2px_0_#00000005]"
                 >
-                  <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
+                  <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-foreground whitespace-pre-wrap">
                     {content}
                   </p>
                 </div>
               )
             }
 
-            // Assistant turns render as an action card: a label, the narration,
-            // and a plan reference when the project carries one.
+            // Assistant turns: thinking label, narration as plain text, then
+            // an action card for the edit.
             return (
-              <div
-                key={`${message.id}-${index}`}
-                className="rounded-2xl border border-border/40 bg-white p-3.5 shadow-[inset_0px_0px_0px_.5px_#fff,0px_0px_0px_.5px_rgba(119,119,113,.28),0px_1px_1px_0px_#0000000a,0px_1px_1px_-.5px_#0000000a]"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground">
-                    Edited
-                  </span>
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-                    index.tsx
-                  </span>
-                </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+              <div key={`${message.id}-${index}`} className="space-y-3">
+                <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080]">
+                  Finished thinking
+                </p>
+                <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-foreground whitespace-pre-wrap">
                   {content}
                 </p>
-                {project.plan?.name && (
-                  <div className="mt-2.5 flex items-center gap-2 border-t border-border/60 pt-2.5 text-sm text-muted-foreground">
-                    <FileText className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">
-                      <span className="font-medium text-foreground">Plan:</span>{' '}
-                      {project.plan.name}
+                <div className="rounded-[20px] border border-[#00000029] bg-white p-3.5 shadow-[0_1px_2px_0_#00000005]">
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Inter_Display',var(--font-sans)] text-base font-semibold leading-6 tracking-[0.012em] text-foreground">
+                      Edited
+                    </span>
+                    <span className="rounded-[6px] bg-muted px-2.5 py-0.5 font-['Inter_Display',var(--font-sans)] text-base font-semibold leading-6 tracking-[0.012em] text-muted-foreground">
+                      index.tsx
                     </span>
                   </div>
-                )}
+                  <p className="mt-1.5 font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080]">
+                    Reviewing changes and applying updates
+                  </p>
+                </div>
               </div>
             )
           })}

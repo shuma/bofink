@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  Bookmark,
   FileText,
   Globe,
   Mic,
@@ -238,9 +239,9 @@ export default function DemoPage() {
                 return (
                   <div
                     key={`${message.id}-${index}`}
-                    className="inline-block max-w-full rounded-2xl rounded-br-sm border border-border/40 bg-white px-5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+                    className="inline-block max-w-full rounded-2xl rounded-br-sm border border-[#00000029] bg-white px-5 py-4 shadow-[0_1px_2px_0_#00000005]"
                   >
-                    <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
+                    <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-foreground whitespace-pre-wrap">
                       {content}
                     </p>
                   </div>
@@ -248,38 +249,67 @@ export default function DemoPage() {
               }
 
               return (
-                <div
-                  key={`${message.id}-${index}`}
-                  className="rounded-2xl border border-border/40 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">
-                      Edited
-                    </span>
-                    <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-                      index.tsx
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                <div key={`${message.id}-${index}`} className="space-y-3">
+                  <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080]">
+                    Finished thinking
+                  </p>
+                  <p className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-foreground whitespace-pre-wrap">
                     {content}
                   </p>
-                  {project.plan?.name && (
-                    <div className="mt-2.5 flex items-center gap-1.5 border-t border-border/40 pt-2.5 text-sm text-muted-foreground">
-                      <FileText className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">
-                        <span className="font-medium text-foreground">Plan:</span>{' '}
-                        {project.plan.name}
+                  <div className="rounded-[20px] border border-[#00000029] bg-white p-3.5 shadow-[0_1px_2px_0_#00000005]">
+                    <div className="flex items-center gap-2">
+                      <span className="font-['Inter_Display',var(--font-sans)] text-base font-semibold leading-6 tracking-[0.012em] text-foreground">
+                        Edited
+                      </span>
+                      <span className="rounded-[6px] bg-muted px-2.5 py-0.5 font-['Inter_Display',var(--font-sans)] text-base font-semibold leading-6 tracking-[0.012em] text-muted-foreground">
+                        index.tsx
                       </span>
                     </div>
-                  )}
+                    <p className="mt-1.5 font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080]">
+                      Reviewing changes and applying updates
+                    </p>
+                  </div>
                 </div>
               )
             })}
 
+            {/* Task card */}
+            <div className="rounded-[20px] border border-[#00000029] bg-white shadow-[0_1px_2px_0_#00000005]">
+              <div className="flex items-center justify-between gap-3 px-5 py-5">
+                <h3 className="truncate font-['Inter_Display',var(--font-sans)] text-base font-semibold leading-6 tracking-[0.012em] text-foreground">
+                  Redesign hero as dropzone
+                </h3>
+                <button
+                  type="button"
+                  aria-label="Bookmark task"
+                  className="shrink-0 text-foreground transition-colors hover:text-muted-foreground"
+                >
+                  <Bookmark className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="border-t border-[#00000014]" />
+              <div className="flex gap-3 p-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('code')}
+                  className="flex-1 rounded-2xl border border-[#00000029] bg-white px-4 py-3 font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-foreground/80 transition-colors hover:bg-black/[0.02]"
+                >
+                  Details
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('preview')}
+                  className="flex-1 rounded-2xl border border-[#00000014] bg-gradient-to-b from-white to-black/[0.04] px-4 py-3 font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080] transition-colors hover:to-black/[0.06]"
+                >
+                  Preview
+                </button>
+              </div>
+            </div>
+
             {isBuilding && (
-              <div className="flex items-center gap-2 rounded-2xl border border-border/40 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-2 rounded-[20px] border border-[#00000029] bg-white p-3.5 shadow-[0_1px_2px_0_#00000005]">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="text-sm text-muted-foreground">Thinking...</span>
+                <span className="font-['Inter_Display',var(--font-sans)] text-base font-medium leading-6 tracking-[0.012em] text-[#00000080]">Thinking...</span>
               </div>
             )}
             </div>

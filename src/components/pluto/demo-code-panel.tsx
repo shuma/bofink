@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Lock, Copy, Download, Check } from 'lucide-react'
+import { Copy, Download, Check } from 'lucide-react'
 import { FileTree } from './file-tree'
 import { CodeEditor } from './code-editor'
 import { cn } from '@/lib/utils'
@@ -126,46 +126,11 @@ export function DemoCodePanel({ onLineSelection, className, noPadding = false }:
 
   return (
     <div className={cn('flex h-full flex-col', !noPadding && 'px-3 pb-3', className)}>
-      <div className={cn('flex h-full flex-col overflow-hidden bg-card', !noPadding && 'rounded-2xl border border-border')}>
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              <Lock className="h-3 w-3" />
-              Read only
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-              Demo Mode
-            </span>
-          </div>
-          {openFiles.length > 0 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleCopy}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Copy file content"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </button>
-              <button
-                onClick={handleDownload}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Download file"
-              >
-                <Download className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
+      <div className={cn('flex h-full flex-col overflow-hidden bg-white', !noPadding && 'rounded-[20px] border border-[#00000029] shadow-[0_1px_2px_0_#00000005]')}>
         {/* Main content: file tree + editor */}
         <div className="flex flex-1 overflow-hidden">
           {/* File tree sidebar */}
-          <div className="w-56 shrink-0 border-r border-border">
+          <div className="w-64 shrink-0 border-r border-[#00000014]">
             <FileTree
               tree={DEMO_FILE_TREE}
               selectedPath={selectedPath}
@@ -191,6 +156,30 @@ export function DemoCodePanel({ onLineSelection, className, noPadding = false }:
                   : null
               }
               onLineSelectionChange={handleLineSelectionChange}
+              actions={
+                openFiles.length > 0 ? (
+                  <>
+                    <button
+                      onClick={handleDownload}
+                      className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-black/5 hover:text-foreground"
+                      aria-label="Download file"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-black/5 hover:text-foreground"
+                      aria-label="Copy file content"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </>
+                ) : undefined
+              }
               className="h-full"
             />
           </div>

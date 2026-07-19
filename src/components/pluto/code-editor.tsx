@@ -1,10 +1,53 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Highlight, themes } from 'prism-react-renderer'
+import { Highlight, type PrismTheme } from 'prism-react-renderer'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OpenFile, LineSelection } from '@/types/pluto'
+
+// Light syntax palette matching the design: bold magenta keywords, blue
+// strings/numbers, orange function names, violet variables, gray comments.
+const plutoLight: PrismTheme = {
+  plain: {
+    color: '#28282C',
+    backgroundColor: '#FFFFFF',
+  },
+  styles: [
+    {
+      types: ['comment', 'prolog', 'doctype', 'cdata'],
+      style: { color: '#8D8D8D' },
+    },
+    {
+      types: ['keyword', 'boolean', 'important'],
+      style: { color: '#C2258C', fontWeight: '600' },
+    },
+    {
+      types: ['string', 'char', 'attr-value', 'url', 'regex'],
+      style: { color: '#1E4FC2' },
+    },
+    {
+      types: ['number', 'constant', 'symbol', 'atrule', 'unit'],
+      style: { color: '#1A63D9' },
+    },
+    {
+      types: ['function', 'class-name', 'maybe-class-name', 'tag'],
+      style: { color: '#B4470F' },
+    },
+    {
+      types: ['variable', 'parameter', 'property', 'property-access', 'attr-name', 'selector'],
+      style: { color: '#5B54D9' },
+    },
+    {
+      types: ['operator', 'punctuation'],
+      style: { color: '#57534E' },
+    },
+    {
+      types: ['builtin', 'namespace'],
+      style: { color: '#5B54D9' },
+    },
+  ],
+}
 
 interface CodeEditorProps {
   files: OpenFile[]
@@ -13,6 +56,7 @@ interface CodeEditorProps {
   onCloseFile: (index: number) => void
   selectedLines?: { startLine: number; endLine: number } | null
   onLineSelectionChange?: (selection: LineSelection | null) => void
+  actions?: React.ReactNode
   className?: string
 }
 
@@ -56,6 +100,7 @@ export function CodeEditor({
   onCloseFile,
   selectedLines,
   onLineSelectionChange,
+  actions,
   className,
 }: CodeEditorProps) {
   const activeFile = files[activeIndex]
@@ -104,7 +149,7 @@ export function CodeEditor({
     return (
       <div
         className={cn(
-          'flex items-center justify-center bg-muted/20',
+          'flex items-center justify-center bg-white',
           className
         )}
       >
@@ -118,19 +163,19 @@ export function CodeEditor({
   return (
     <div className={cn('flex h-full flex-col overflow-hidden', className)}>
       {/* Tab bar */}
-      <div className="flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border bg-muted/30 px-2">
+      <div className="flex shrink-0 items-stretch overflow-x-auto border-b border-[#00000014] bg-white">
         {files.map((file, index) => (
           <button
             key={file.path}
             onClick={() => onSelectFile(index)}
             className={cn(
-              'group flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors',
+              'group flex items-center gap-2 border-r border-[#00000014] px-4 py-2.5 font-["Inter_Display",var(--font-sans)] text-[15px] transition-colors',
               index === activeIndex
-                ? 'border-primary bg-background text-foreground'
-                : 'border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                ? 'bg-white font-medium text-foreground'
+                : 'text-muted-foreground hover:bg-black/[0.02] hover:text-foreground'
             )}
           >
-            <span className="max-w-[120px] truncate">{file.name}</span>
+            <span className="max-w-[200px] truncate">{file.path}</span>
             <span
               onClick={(e) => {
                 e.stopPropagation()
@@ -138,21 +183,29 @@ export function CodeEditor({
               }}
               className={cn(
                 'flex h-4 w-4 items-center justify-center rounded-sm transition-colors',
-                'opacity-0 group-hover:opacity-100',
+                index === activeIndex
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover:opacity-100',
                 'hover:bg-muted-foreground/20'
               )}
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </span>
           </button>
         ))}
+        {actions && (
+          <div className="ml-auto flex items-center gap-1 px-3">{actions}</div>
+        )}
       </div>
 
       {/* Code content */}
       {activeFile && (
-        <div className="flex-1 overflow-auto rounded-br-2xl bg-white">
+        <div className="flex-1 overflow-auto bg-white">
+          <div className="relative min-h-full">
+            {/* Full-height line number gutter background */}
+            <div className="absolute inset-y-0 left-0 w-[3.25rem] bg-[#F0F0EF]" />
           <Highlight
-            theme={themes.github}
+            theme={plutoLight}
             code={activeFile.content}
             language={getLanguage(activeFile.name)}
           >
@@ -164,7 +217,7 @@ export function CodeEditor({
               getTokenProps,
             }) => (
               <pre
-                className={cn(hlClassName, 'p-4 text-sm leading-relaxed')}
+                className={cn(hlClassName, 'relative py-4 pr-4 text-sm leading-7')}
                 style={{ ...style, margin: 0, background: 'transparent' }}
               >
                 <code>
@@ -185,13 +238,13 @@ export function CodeEditor({
                       >
                         <span
                           className={cn(
-                            'table-cell select-none pr-4 text-right',
-                            isSelected ? 'text-blue-600' : 'text-gray-400'
+                            'table-cell w-[3.25rem] min-w-[3.25rem] select-none bg-[#F0F0EF] px-3 text-right',
+                            isSelected ? 'text-blue-600' : 'text-[#00000066]'
                           )}
                         >
                           {lineNumber}
                         </span>
-                        <span className="table-cell">
+                        <span className="table-cell pl-4">
                           {line.map((token, tokenIndex) => {
                             const { key: _tokenKey, ...tokenProps } = getTokenProps({ token })
                             return (
@@ -209,6 +262,7 @@ export function CodeEditor({
               </pre>
             )}
           </Highlight>
+          </div>
         </div>
       )}
     </div>

@@ -87,6 +87,26 @@ function HomePageContent() {
         <DiaGradient />
       </div>
 
+      {/* Log in button */}
+      {isAuthenticated === false && (
+        <button
+          onClick={() => setShowAuthModal(true)}
+          className="fixed top-5 right-6 flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="opacity-70"
+          >
+            <path d="M6 3.5V2.75C6 2.06 6.56 1.5 7.25 1.5h5c.69 0 1.25.56 1.25 1.25v10.5c0 .69-.56 1.25-1.25 1.25h-5c-.69 0-1.25-.56-1.25-1.25v-.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M9.5 8H1.5M9.5 8 7 5.5M9.5 8 7 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Log in
+        </button>
+      )}
+
       {/* My Projects button */}
       {isAuthenticated && (
         <button

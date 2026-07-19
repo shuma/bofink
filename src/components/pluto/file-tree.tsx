@@ -2,54 +2,72 @@
 
 import { useState, useMemo } from 'react'
 import {
+  Braces,
   ChevronRight,
   ChevronDown,
+  Code,
   File,
-  Folder,
-  FolderOpen,
-  Search,
+  FileText,
+  Files,
+  Image as ImageIcon,
+  MoreHorizontal,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FileNode } from '@/types/pluto'
 
-// File type icon components
-function TypeScriptIcon({ className }: { className?: string }) {
+// Monochrome file type icons matching the design language
+const ICON_COLOR = '#57534E'
+
+function LabelBadgeIcon({
+  label,
+  className,
+}: {
+  label: string
+  className?: string
+}) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#3178c6" />
-      <path
-        d="M14.5 12v6.5M14.5 12H17c.83 0 1.5.67 1.5 1.5S17.83 15 17 15h-2.5m0 0v3.5M7 12h4m-2 0v6.5"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <rect x="1" y="3" width="22" height="18" rx="5" fill="#E7E5E4" />
+      <text
+        x="12"
+        y="16.5"
+        textAnchor="middle"
+        fontSize="10"
+        fontWeight="700"
+        fill={ICON_COLOR}
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        {label}
+      </text>
     </svg>
   )
+}
+
+function TypeScriptIcon({ className }: { className?: string }) {
+  return <LabelBadgeIcon label="TS" className={className} />
+}
+
+function JavaScriptIcon({ className }: { className?: string }) {
+  return <LabelBadgeIcon label="JS" className={className} />
+}
+
+function CSSIcon({ className }: { className?: string }) {
+  return <LabelBadgeIcon label="css" className={className} />
 }
 
 function ReactIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none">
-      <circle cx="12" cy="12" r="2" fill="#61dafb" />
+      <circle cx="12" cy="12" r="2" fill={ICON_COLOR} />
+      <ellipse cx="12" cy="12" rx="9" ry="3.5" stroke={ICON_COLOR} strokeWidth="1.3" />
       <ellipse
         cx="12"
         cy="12"
         rx="9"
         ry="3.5"
-        stroke="#61dafb"
-        strokeWidth="1"
-        fill="none"
-      />
-      <ellipse
-        cx="12"
-        cy="12"
-        rx="9"
-        ry="3.5"
-        stroke="#61dafb"
-        strokeWidth="1"
-        fill="none"
+        stroke={ICON_COLOR}
+        strokeWidth="1.3"
         transform="rotate(60 12 12)"
       />
       <ellipse
@@ -57,122 +75,23 @@ function ReactIcon({ className }: { className?: string }) {
         cy="12"
         rx="9"
         ry="3.5"
-        stroke="#61dafb"
-        strokeWidth="1"
-        fill="none"
+        stroke={ICON_COLOR}
+        strokeWidth="1.3"
         transform="rotate(120 12 12)"
       />
     </svg>
   )
 }
 
-function JavaScriptIcon({ className }: { className?: string }) {
+function GitIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#f7df1e" />
-      <path
-        d="M8 17.5c.83 1 1.5 1.5 2.5 1.5 1.5 0 2-1 2-1.5 0-2-4-1.5-4-4 0-1.5 1.5-2.5 3-2.5 1 0 2 .5 2.5 1M16 11v5.5c0 1-.5 2.5-2 2.5"
-        stroke="#323330"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function JSONIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#cbcb41" />
-      <path
-        d="M8 8c-1 0-1.5.5-1.5 1.5v2c0 .5-.5 1-1 1 .5 0 1 .5 1 1v2c0 1 .5 1.5 1.5 1.5M16 8c1 0 1.5.5 1.5 1.5v2c0 .5.5 1 1 1-.5 0-1 .5-1 1v2c0 1-.5 1.5-1.5 1.5"
-        stroke="#323330"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function CSSIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#264de4" />
-      <path
-        d="M7 7h10l-.5 5H9l.25 2.5h7l-.5 3-3.75 1.5-3.75-1.5-.25-2"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function HTMLIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#e34c26" />
-      <path
-        d="M7 7l1.5 10 3.5 2 3.5-2 1.5-10M8 9h8M8.5 12h7M9 15h6"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function MarkdownIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect
-        x="2"
-        y="4"
-        width="20"
-        height="16"
-        rx="2"
-        fill="#083fa1"
-        stroke="#083fa1"
-      />
-      <path
-        d="M5 15V9l2.5 3 2.5-3v6M14 15v-6l3 3.5 3-3.5v6"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function PrettierIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="2" fill="#1a2b34" />
-      <rect x="5" y="6" width="8" height="2" rx="1" fill="#f7b93e" />
-      <rect x="5" y="10" width="14" height="2" rx="1" fill="#56b3b4" />
-      <rect x="5" y="14" width="10" height="2" rx="1" fill="#ea5e5e" />
-    </svg>
-  )
-}
-
-function BunIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <ellipse cx="12" cy="14" rx="8" ry="6" fill="#fbf0df" />
-      <path
-        d="M6 10c0-3 2.5-6 6-6s6 3 6 6"
-        stroke="#fbf0df"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <circle cx="9" cy="13" r="1.5" fill="#333" />
-      <circle cx="15" cy="13" r="1.5" fill="#333" />
-      <ellipse cx="12" cy="15.5" rx="1" ry="0.5" fill="#f9a8d4" />
+      <circle cx="12" cy="12" r="11" fill={ICON_COLOR} />
+      <circle cx="9.5" cy="7.5" r="1.7" fill="white" />
+      <circle cx="9.5" cy="16.5" r="1.7" fill="white" />
+      <circle cx="16" cy="10" r="1.7" fill="white" />
+      <path d="M9.5 9.2v5.6" stroke="white" strokeWidth="1.4" />
+      <path d="M9.5 13.5c0-2.5 6.5-1 6.5-3.5" stroke="white" strokeWidth="1.4" />
     </svg>
   )
 }
@@ -183,22 +102,25 @@ const FILE_ICONS: Record<string, React.FC<{ className?: string }>> = {
   tsx: ReactIcon,
   jsx: ReactIcon,
   js: JavaScriptIcon,
-  json: JSONIcon,
+  json: Braces,
   css: CSSIcon,
-  html: HTMLIcon,
-  htm: HTMLIcon,
-  md: MarkdownIcon,
-  mdx: MarkdownIcon,
+  html: Code,
+  htm: Code,
+  md: FileText,
+  mdx: FileText,
+  ico: ImageIcon,
+  png: ImageIcon,
+  jpg: ImageIcon,
+  jpeg: ImageIcon,
+  gif: ImageIcon,
+  webp: ImageIcon,
+  svg: Files,
 }
 
 // Special filename mappings
 const FILENAME_ICONS: Record<string, React.FC<{ className?: string }>> = {
-  '.prettierrc': PrettierIcon,
-  '.prettierrc.json': PrettierIcon,
-  'prettier.config.js': PrettierIcon,
-  'prettier.config.cjs': PrettierIcon,
-  'bun.lockb': BunIcon,
-  'bunfig.toml': BunIcon,
+  '.gitignore': GitIcon,
+  '.gitattributes': GitIcon,
 }
 
 function getFileIcon(
@@ -227,7 +149,6 @@ interface FileTreeProps {
 
 interface TreeNodeProps {
   node: FileNode
-  depth: number
   selectedPath: string | null
   expandedPaths: Set<string>
   onToggleExpand: (path: string) => void
@@ -257,7 +178,6 @@ function matchesSearch(node: FileNode, query: string): boolean {
 
 function TreeNode({
   node,
-  depth,
   selectedPath,
   expandedPaths,
   onToggleExpand,
@@ -291,49 +211,42 @@ function TreeNode({
       <button
         onClick={handleClick}
         className={cn(
-          'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-sm transition-colors',
-          'hover:bg-muted/50',
-          isSelected && 'bg-accent text-accent-foreground'
+          'group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left font-["Inter_Display",var(--font-sans)] text-[15px] leading-6 transition-colors',
+          'hover:bg-black/[0.03]',
+          isSelected && 'bg-[#E4EBF5] text-foreground'
         )}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
         {node.isDir ? (
-          <>
-            {shouldShowChildren ? (
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            )}
-            {shouldShowChildren ? (
-              <FolderOpen className="h-4 w-4 shrink-0 text-amber-500" />
-            ) : (
-              <Folder className="h-4 w-4 shrink-0 text-amber-500" />
-            )}
-          </>
+          shouldShowChildren ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          )
         ) : (
-          <>
-            <span className="w-3.5" />
-            {(() => {
-              const IconComponent = getFileIcon(node.name)
-              if (IconComponent) {
-                return <IconComponent className="h-4 w-4 shrink-0" />
-              }
+          (() => {
+            const IconComponent = getFileIcon(node.name)
+            if (IconComponent) {
               return (
-                <DefaultFileIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <IconComponent className="h-4 w-4 shrink-0 text-[#57534E]" />
               )
-            })()}
-          </>
+            }
+            return (
+              <DefaultFileIcon className="h-4 w-4 shrink-0 text-[#57534E]" />
+            )
+          })()
         )}
-        <span className="truncate">{node.name}</span>
+        <span className="min-w-0 flex-1 truncate">{node.name}</span>
+        {isSelected && !node.isDir && (
+          <MoreHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
       </button>
 
       {shouldShowChildren && visibleChildren.length > 0 && (
-        <div>
+        <div className="ml-[15px] border-l border-[#00000014] pl-1.5">
           {visibleChildren.map((child) => (
             <TreeNode
               key={child.path}
               node={child}
-              depth={depth + 1}
               selectedPath={selectedPath}
               expandedPaths={expandedPaths}
               onToggleExpand={onToggleExpand}
@@ -377,20 +290,19 @@ export function FileTree({
   return (
     <div className={cn('flex h-full flex-col', className)}>
       {/* Search input */}
-      <div className="shrink-0 border-b border-border p-2">
+      <div className="shrink-0 p-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search files..."
-            className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-8 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            placeholder="Search code"
+            className="h-11 w-full rounded-xl border border-[#00000029] bg-white px-4 pr-8 font-['Inter_Display',var(--font-sans)] text-[15px] text-foreground shadow-[0_1px_2px_0_#00000005] placeholder:text-[#00000080] focus:outline-none focus:ring-1 focus:ring-ring"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -399,7 +311,7 @@ export function FileTree({
       </div>
 
       {/* Tree view */}
-      <div className="flex-1 overflow-auto p-2">
+      <div className="flex-1 overflow-auto px-3 pb-3">
         {visibleTree.length === 0 ? (
           <p className="px-2 py-4 text-center text-sm text-muted-foreground">
             {searchQuery ? 'No files match your search' : 'No files found'}
@@ -409,7 +321,6 @@ export function FileTree({
             <TreeNode
               key={node.path}
               node={node}
-              depth={0}
               selectedPath={selectedPath}
               expandedPaths={expandedPaths}
               onToggleExpand={handleToggleExpand}

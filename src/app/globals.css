@@ -52,7 +52,7 @@
 
 :root {
   /* Soft warm backgrounds */
-  --background: #fafafa;
+  --background: #F6F5F4;
   --foreground: oklch(0.25 0.015 260);
 
   /* Warm white cards with subtle cream */

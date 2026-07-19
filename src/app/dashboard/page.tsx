@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { ProjectCard } from '@/components/pluto/project-card'
 import { PlutoOrb } from '@/components/pluto/pluto-orb'
 import { createClient } from '@/lib/supabase/client'
@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -93,9 +94,21 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="py-10">
         <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <h1 className="text-xl font-heading font-semibold text-foreground mb-8">
-            My Projects
-          </h1>
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="font-['Inter_Display',var(--font-sans)] text-xl font-semibold tracking-[0.012em] text-foreground">
+              My Projects
+            </h1>
+            <div className="relative w-full max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#00000080]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search any Project"
+                className="h-10 w-full rounded-xl border border-[#00000029] bg-white pl-9 pr-3 font-['Inter_Display',var(--font-sans)] text-[15px] text-foreground shadow-[0_1px_2px_0_#00000005] placeholder:text-[#00000080] focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+          </div>
 
           {isLoading && (
             <div className="flex items-center justify-center py-24">
@@ -134,17 +147,32 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {!isLoading && !error && projects.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
+          {!isLoading && !error && projects.length > 0 && (() => {
+            const query = searchQuery.trim().toLowerCase()
+            const visibleProjects = query
+              ? projects.filter((p) => p.name.toLowerCase().includes(query))
+              : projects
+
+            if (visibleProjects.length === 0) {
+              return (
+                <p className="py-24 text-center text-sm text-muted-foreground">
+                  No projects match &ldquo;{searchQuery.trim()}&rdquo;
+                </p>
+              )
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {visibleProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )
+          })()}
         </div>
       </main>
     </div>
